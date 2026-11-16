@@ -25,7 +25,7 @@ from pydantic import BaseModel
 DB_PATH = os.environ.get("TRACKER_DB", str(Path(__file__).with_name("tracker.db")))
 APP_TOKEN = os.environ.get("APP_TOKEN", "")  # اختياري: كلمة سر بسيطة للـ API
 MIN_INTERVAL = 30  # ثانية
-DEFAULT_INTERVAL = 900  # ١٥ دقيقة
+DEFAULT_INTERVAL = 300  # ٥ دقايق
 
 HEADERS = {
     "User-Agent": (
@@ -361,7 +361,14 @@ def status():
 @app.get("/api/products", dependencies=[Depends(auth)])
 def list_products():
     with _db_lock:
-        rows = _db.execute("SELECT * FROM products ORDER BY COALESCE(last_change,0) DESC, id DESC").fetchall()
+        rows = _db.execute(
+            """SELECT p.*,
+               (SELECT MIN(price) FROM history h WHERE h.product_id=p.id) AS min_price,
+               (SELECT ts FROM history h WHERE h.product_id=p.id ORDER BY price ASC, ts DESC LIMIT 1) AS min_ts,
+               (SELECT MAX(price) FROM history h WHERE h.product_id=p.id) AS max_price,
+               (SELECT ts FROM history h WHERE h.product_id=p.id ORDER BY price DESC, ts DESC LIMIT 1) AS max_ts
+               FROM products p ORDER BY COALESCE(p.last_change,0) DESC, p.id DESC"""
+        ).fetchall()
     return [row_to_dict(r) for r in rows]
 
 

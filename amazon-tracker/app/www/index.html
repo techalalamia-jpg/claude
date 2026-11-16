@@ -61,6 +61,13 @@ const $ = s => document.querySelector(s);
 const esc = s => (s ?? '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money = p => p == null ? '—' : Number(p).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ج.م';
 function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',2500)}
+function dt(ts){return ts?new Date(ts*1000).toLocaleDateString('ar-EG',{day:'numeric',month:'short',year:'numeric'}):''}
+function lowLine(p){
+  if(p.min_price==null||p.price==null)return '';
+  if(p.available&&p.price<=p.min_price&&p.max_price>p.min_price)return '<div class="meta" style="color:var(--down);font-weight:700">🔥 ده أقل سعر اتسجّل</div>';
+  if(p.min_price<p.price)return `<div class="meta">أقل سعر: <b>${money(p.min_price)}</b> (${dt(p.min_ts)})</div>`;
+  return '';
+}
 function ago(ts){if(!ts)return 'لسه';const s=Date.now()/1000-ts;if(s<90)return 'من لحظات';if(s<3600)return 'من '+Math.round(s/60)+' دقيقة';if(s<86400)return 'من '+Math.round(s/3600)+' ساعة';return 'من '+Math.round(s/86400)+' يوم'}
 
 async function api(path, opt = {}) {
@@ -94,7 +101,7 @@ async function render() {
           <div class="info"><div class="title">${esc(p.title || p.asin)}</div>
           <div class="price">${p.available ? money(p.price) : 'غير متوفر'}
             ${p.target_price ? `<span class="badge gray">🎯 ${money(p.target_price)}</span>` : ''}</div>
-          <div class="meta">${p.status === 'ok' ? 'اتفحص ' + ago(p.last_checked) : p.status === 'pending' ? 'في انتظار أول فحص...' : esc(p.status)}${lastChange ? ' • آخر تغيير ' + lastChange : ''}</div></div></div>`;
+          ${lowLine(p)}<div class="meta">${p.status === 'ok' ? 'اتفحص ' + ago(p.last_checked) : p.status === 'pending' ? 'في انتظار أول فحص...' : esc(p.status)}${lastChange ? ' • آخر تغيير ' + lastChange : ''}</div></div></div>`;
       });
       v.innerHTML = h;
     } else if (tab === 'changes') {
@@ -109,7 +116,7 @@ async function render() {
       }).join('') : '<div class="empty">لسه مفيش تغيرات في الأسعار.</div>';
     } else {
       $('#sub').textContent = 'الإعدادات';
-      let s = {telegram_chat: '', default_interval: 900, telegram_token_set: false};
+      let s = {telegram_chat: '', default_interval: 300, telegram_token_set: false};
       try { s = await api('/api/settings'); } catch(e) {}
       v.innerHTML = `
         <label>عنوان السيرفر (مثال: http://192.168.1.10:8000)</label>
@@ -123,11 +130,11 @@ async function render() {
         <input id="s_tt" placeholder="123456:ABC..." type="password">
         <label>Chat ID</label>
         <input id="s_tc" value="${esc(s.telegram_chat)}" placeholder="123456789">
-        <label>الفحص كل كام ثانية (الافتراضي 900 = ١٥ دقيقة، الأقل 30)</label>
+        <label>الفحص كل كام ثانية (الافتراضي 300 = ٥ دقايق، الأقل 30)</label>
         <input id="s_int" type="number" value="${s.default_interval}">
         <button class="btn" onclick="saveSettings()">حفظ الإعدادات</button>
         <button class="btn sec" onclick="testNotif()">إرسال إشعار تجريبي</button>
-        <div class="meta" style="margin-top:14px;line-height:1.7">⚠ كل ما قللت الفاصل زاد خطر إن امازون تحظر الـ IP مؤقتاً. ١٥ دقيقة آمنة لأغلب الاستخدام.</div>`;
+        <div class="meta" style="margin-top:14px;line-height:1.7">⚠ كل ما قللت الفاصل زاد خطر إن امازون تحظر الـ IP مؤقتاً. ٥ دقايق مناسبة لحوالي ٣٠ منتج، ولو زودت المنتجات الفحص هيبقى أبطأ شوية.</div>`;
     }
   } catch (e) {
     $('#sub').textContent = 'مش متصل';
@@ -152,20 +159,38 @@ async function addProduct(){
 async function openProduct(id){
   const p = products.find(x => x.id === id); if (!p) return;
   let hist = []; try { hist = await api(`/api/products/${id}/history`); } catch(e){}
+  const stats = p.min_price != null ? `<div style="display:flex;gap:8px;margin:10px 0">
+    <div class="card" style="flex:1;margin:0;display:block"><div class="meta">أقل سعر</div><div class="price" style="color:var(--down)">${money(p.min_price)}</div><div class="meta">${dt(p.min_ts)}</div></div>
+    <div class="card" style="flex:1;margin:0;display:block"><div class="meta">أعلى سعر</div><div class="price" style="color:var(--up)">${money(p.max_price)}</div><div class="meta">${dt(p.max_ts)}</div></div></div>` : '';
   openSheet(`<div style="display:flex;gap:10px">${p.image ? `<img src="${esc(p.image)}" style="width:80px;height:80px;object-fit:contain">` : ''}<div><div class="title" style="max-height:none">${esc(p.title || p.asin)}</div><div class="price">${p.available ? money(p.price) : 'غير متوفر'}</div></div></div>
-    ${chart(hist)}
+    ${stats}
+    ${chart(hist, p)}
+    <button class="btn" style="background:#ff9900;color:#111;font-weight:700" onclick="openAmazon('${esc(p.url)}')">فتح في تطبيق امازون</button>
     <label>السعر المستهدف</label><input id="e_tp" type="number" inputmode="decimal" value="${p.target_price ?? ''}">
     <button class="btn" onclick="saveTarget(${id})">حفظ السعر المستهدف</button>
-    <button class="btn sec" onclick="window.open('${esc(p.url)}','_blank')">فتح على امازون</button>
     <button class="btn sec" onclick="checkNow(${id})">افحص دلوقتي</button>
     <button class="btn red" onclick="delProduct(${id})">حذف المنتج</button>`);
 }
-function chart(h){
+function openAmazon(url){
+  // على أندرويد الرابط بيتفتح في تطبيق امازون لو متثبّت ومفعّل فتح روابطه
+  window.open(url, '_blank');
+}
+function chart(h, p){
+  if (h.length < 1) return '';
+  h = h.slice();
+  const last = p && p.last_checked ? p.last_checked : h[h.length-1].ts;
+  if (last > h[h.length-1].ts) h.push({price: h[h.length-1].price, ts: last});
   if (h.length < 2) return '<div class="meta" style="margin:10px 0">الرسم البياني هيظهر بعد أول تغيير في السعر.</div>';
   const ps = h.map(x => x.price), mn = Math.min(...ps), mx = Math.max(...ps), rg = (mx - mn) || 1;
   const t0 = h[0].ts, t1 = h[h.length-1].ts, tr = (t1 - t0) || 1;
-  const pts = h.map(x => `${10 + (x.ts - t0) / tr * 280},${100 - (x.price - mn) / rg * 80}`).join(' ');
-  return `<svg class="chart" viewBox="0 0 300 120"><polyline points="${pts}" fill="none" stroke="#0f2a47" stroke-width="2"/><text x="6" y="14" font-size="10" fill="#6b7a8a">${money(mx)}</text><text x="6" y="116" font-size="10" fill="#6b7a8a">${money(mn)}</text></svg>`;
+  const X = x => 10 + (x.ts - t0) / tr * 280, Y = x => 100 - (x.price - mn) / rg * 80;
+  // خطوات (السعر بيفضل ثابت لحد ما يتغير)
+  let pts = ''; h.forEach((x, i) => { if (i) pts += `${X(x)},${Y(h[i-1])} `; pts += `${X(x)},${Y(x)} `; });
+  const lowPt = h.reduce((a, b) => b.price < a.price ? b : a);
+  return `<svg class="chart" viewBox="0 0 300 130"><polyline points="${pts}" fill="none" stroke="#0f2a47" stroke-width="2"/>
+    <circle cx="${X(lowPt)}" cy="${Y(lowPt)}" r="4" fill="#1e8e3e"/>
+    <text x="6" y="14" font-size="9" fill="#6b7a8a">${money(mx)}</text><text x="6" y="116" font-size="9" fill="#6b7a8a">${money(mn)}</text>
+    <text x="10" y="127" font-size="8" fill="#6b7a8a">${dt(t0)}</text><text x="290" y="127" font-size="8" fill="#6b7a8a" text-anchor="end">${dt(t1)}</text></svg>`;
 }
 async function saveTarget(id){ const v = parseFloat($('#e_tp').value); try { await api('/api/products/'+id, {method:'PATCH', body: isNaN(v) ? {clear_target:true} : {target_price:v}}); closeSheet(); toast('اتحفظ'); render(); } catch(e){ toast(e.message) } }
 async function checkNow(id){ try { await api(`/api/products/${id}/check`, {method:'POST'}); closeSheet(); toast('هيتفحص خلال ثواني'); setTimeout(render, 8000); } catch(e){ toast(e.message) } }
