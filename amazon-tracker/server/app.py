@@ -309,6 +309,65 @@ def scheduler_loop():
         time.sleep(3)
 
 
+# --------------------------------------------------------------------- search
+SORTS = {
+    "relevance": None,
+    "newest": "date-desc-rank",  # امازون مش بتعرض تاريخ الإضافة، بس بترتب بالأحدث وصولاً
+    "price_asc": "price-asc-rank",
+    "price_desc": "price-desc-rank",
+    "rating": "review-rank",
+}
+_search_cache = {}  # key -> (ts, results)
+
+
+def parse_search_html(html):
+    if any(mark in html for mark in CAPTCHA_MARKERS):
+        raise Blocked("captcha")
+    soup = BeautifulSoup(html, "lxml")
+    out = []
+    for el in soup.select('div[data-component-type="s-search-result"]'):
+        asin = (el.get("data-asin") or "").strip().upper()
+        if not asin:
+            continue
+        h2 = el.select_one("h2")
+        title = h2.get_text(" ", strip=True) if h2 else None
+        img = el.select_one("img.s-image")
+        cur = el.select_one(".a-price:not([data-a-strike]) .a-offscreen")
+        old = el.select_one('.a-price[data-a-strike="true"] .a-offscreen')
+        rating_el = el.select_one(".a-icon-alt")
+        price, old_price = parse_price(cur.get_text()) if cur else None, parse_price(old.get_text()) if old else None
+        discount = round((1 - price / old_price) * 100) if price and old_price and old_price > price else None
+        out.append(
+            {
+                "asin": asin,
+                "title": title,
+                "image": img.get("src") if img else None,
+                "price": price,
+                "old_price": old_price,
+                "discount": discount,
+                "rating": parse_price(rating_el.get_text()) if rating_el else None,
+                "sponsored": bool(el.select_one(".puis-sponsored-label-text, .s-sponsored-label-text")),
+                "url": f"https://www.amazon.eg/dp/{asin}",
+            }
+        )
+    return out
+
+
+def fetch_search_html(q, lo, hi, sort, page):
+    params = {"k": q, "page": page}
+    if lo is not None:
+        params["low-price"] = int(lo)
+    if hi is not None:
+        params["high-price"] = int(hi)
+    if SORTS.get(sort):
+        params["s"] = SORTS[sort]
+    r = requests.get("https://www.amazon.eg/s", params=params, headers=HEADERS, timeout=25)
+    if r.status_code in (429, 503):
+        raise Blocked(f"http {r.status_code}")
+    r.raise_for_status()
+    return r.text
+
+
 # ----------------------------------------------------------------------- API
 @asynccontextmanager
 async def lifespan(_app):
@@ -370,6 +429,39 @@ def list_products():
                FROM products p ORDER BY COALESCE(p.last_change,0) DESC, p.id DESC"""
         ).fetchall()
     return [row_to_dict(r) for r in rows]
+
+
+@app.get("/api/search", dependencies=[Depends(auth)])
+def search(q: str, min_price: float | None = None, max_price: float | None = None,
+           sort: str = "relevance", page: int = 1):
+    q = q.strip()
+    if not q:
+        raise HTTPException(400, "اكتب كلمة البحث")
+    left = _state["blocked_until"] - time.time()
+    if left > 0:
+        raise HTTPException(429, f"امازون حاظرة مؤقتاً، جرب بعد {int(left // 60) + 1} دقيقة")
+    key = (q.lower(), min_price, max_price, sort, page)
+    hit = _search_cache.get(key)
+    if hit and time.time() - hit[0] < 120:  # كاش دقيقتين عشان منطلبش من امازون كتير
+        results = hit[1]
+    else:
+        try:
+            results = parse_search_html(fetch_search_html(q, min_price, max_price, sort, page))
+        except Blocked as e:
+            _on_blocked(str(e))
+            raise HTTPException(429, "امازون طلبت كابتشا - البحث موقوف مؤقتاً")
+        except requests.RequestException as e:
+            raise HTTPException(502, f"مشكلة في الاتصال بامازون: {e}")
+        _search_cache[key] = (time.time(), results)
+        if len(_search_cache) > 200:
+            _search_cache.pop(next(iter(_search_cache)))
+    # فلترة احتياطية على السعر لو امازون تجاهلت الباراميتر
+    out = [r for r in results
+           if (min_price is None or r["price"] is None or r["price"] >= min_price)
+           and (max_price is None or r["price"] is None or r["price"] <= max_price)]
+    with _db_lock:
+        tracked = {r["asin"] for r in _db.execute("SELECT asin FROM products")}
+    return [{**r, "tracked": r["asin"] in tracked} for r in out]
 
 
 @app.post("/api/products", dependencies=[Depends(auth)])

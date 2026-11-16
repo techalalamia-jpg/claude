@@ -44,6 +44,7 @@
 <button class="fab" id="fab">+</button>
 <nav class="tabs">
   <button data-t="products" class="on">المنتجات</button>
+  <button data-t="search">بحث</button>
   <button data-t="changes">التغيرات</button>
   <button data-t="settings">الإعدادات</button>
 </nav>
@@ -57,6 +58,7 @@ const cfg = {
   token: localStorage.getItem('token') || ''
 };
 let tab = 'products', products = [], timer;
+const sq = {q:'', min:'', max:'', sort:'newest', page:1, res:[], busy:false, err:''};
 const $ = s => document.querySelector(s);
 const esc = s => (s ?? '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money = p => p == null ? '—' : Number(p).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ج.م';
@@ -104,6 +106,9 @@ async function render() {
           ${lowLine(p)}<div class="meta">${p.status === 'ok' ? 'اتفحص ' + ago(p.last_checked) : p.status === 'pending' ? 'في انتظار أول فحص...' : esc(p.status)}${lastChange ? ' • آخر تغيير ' + lastChange : ''}</div></div></div>`;
       });
       v.innerHTML = h;
+    } else if (tab === 'search') {
+      $('#sub').textContent = 'بحث في امازون مصر';
+      drawSearch();
     } else if (tab === 'changes') {
       const ch = await api('/api/changes');
       $('#sub').textContent = 'آخر التغيرات';
@@ -142,6 +147,45 @@ async function render() {
   }
 }
 
+function drawSearch(){
+  const v = $('#view');
+  const sel = (val, t) => `<option value="${val}" ${sq.sort === val ? 'selected' : ''}>${t}</option>`;
+  let h = `<div class="card" style="display:block">
+    <input id="q_q" value="${esc(sq.q)}" placeholder="ابحث عن منتج..." style="direction:rtl;text-align:right" onkeydown="if(event.key==='Enter')doSearch(1)">
+    <div style="display:flex;gap:8px"><input id="q_min" type="number" inputmode="decimal" placeholder="أقل سعر" value="${esc(sq.min)}"><input id="q_max" type="number" inputmode="decimal" placeholder="أعلى سعر" value="${esc(sq.max)}"></div>
+    <select id="q_sort" style="width:100%;padding:12px;border:1px solid #cdd5df;border-radius:10px;font-size:16px;margin:6px 0;background:#fff">
+      ${sel('newest','الأحدث وصولاً (الأحدث إضافة)')}${sel('relevance','الأنسب')}${sel('price_asc','السعر: الأقل أولاً')}${sel('price_desc','السعر: الأعلى أولاً')}${sel('rating','الأعلى تقييماً')}</select>
+    <button class="btn" onclick="doSearch(1)">${sq.busy ? '...جاري البحث' : 'بحث'}</button>
+    <div class="meta" style="margin-top:6px">امازون مش بتعرض تاريخ إضافة المنتج، فالترتيب بـ"الأحدث" هو أقرب حاجة.</div></div>`;
+  if (sq.err) h += `<div class="warn">${esc(sq.err)}</div>`;
+  h += sq.res.map((r, i) => `<div class="card">${r.image ? `<img src="${esc(r.image)}" loading="lazy">` : '<img>'}
+    <div class="info"><div class="title">${esc(r.title || r.asin)}</div>
+    <div class="price">${r.price != null ? money(r.price) : 'السعر مش ظاهر'}${r.discount ? `<span class="badge down">-${r.discount}%</span>` : ''}</div>
+    <div class="meta">${r.old_price ? 'كان ' + money(r.old_price) + ' • ' : ''}${r.rating ? '⭐ ' + r.rating : ''}${r.sponsored ? ' • إعلان' : ''}</div>
+    <div style="display:flex;gap:6px;margin-top:6px">
+      <button class="badge ${r.tracked ? 'gray' : 'down'}" style="border:0;padding:6px 12px;font-size:13px" ${r.tracked ? 'disabled' : ''} onclick="trackResult(${i})">${r.tracked ? 'بتتابعه ✓' : '+ تابع المنتج'}</button>
+      <button class="badge gray" style="border:0;padding:6px 12px;font-size:13px" onclick="openAmazon('${esc(r.url)}')">امازون</button></div></div></div>`).join('');
+  if (sq.res.length) h += '<button class="btn sec" onclick="doSearch(sq.page+1,true)">عرض المزيد</button>';
+  else if (!sq.busy && sq.q && !sq.err) h += '<div class="empty">مفيش نتائج.</div>';
+  v.innerHTML = h;
+}
+async function doSearch(page, more){
+  if (!more) { sq.q = $('#q_q').value.trim(); sq.min = $('#q_min').value; sq.max = $('#q_max').value; sq.sort = $('#q_sort').value; }
+  if (!sq.q) return toast('اكتب كلمة البحث');
+  sq.busy = true; sq.err = ''; sq.page = page; if (!more) sq.res = []; drawSearch();
+  try {
+    const qs = new URLSearchParams({q: sq.q, sort: sq.sort, page});
+    if (sq.min !== '') qs.set('min_price', sq.min); if (sq.max !== '') qs.set('max_price', sq.max);
+    const r = await api('/api/search?' + qs);
+    sq.res = more ? sq.res.concat(r) : r;
+  } catch(e){ sq.err = e.message; }
+  sq.busy = false; drawSearch();
+}
+async function trackResult(i){
+  const r = sq.res[i];
+  try { await api('/api/products', {method:'POST', body:{url: r.url}}); r.tracked = true; toast('اتضاف للمتابعة'); drawSearch(); }
+  catch(e){ toast(e.message) }
+}
 function saveConn(){ cfg.base = $('#s_base').value.trim(); cfg.token = $('#s_token').value; localStorage.setItem('base', cfg.base); localStorage.setItem('token', cfg.token); toast('اتحفظ'); render(); }
 async function saveSettings(){ try { await api('/api/settings', {method:'POST', body:{telegram_token: $('#s_tt').value || null, telegram_chat: $('#s_tc').value, default_interval: parseInt($('#s_int').value) || null}}); toast('اتحفظ'); render(); } catch(e){ toast(e.message) } }
 async function testNotif(){ try { await api('/api/test-notification', {method:'POST'}); toast('اتبعت - شوف تليجرام'); } catch(e){ toast(e.message) } }
@@ -199,7 +243,7 @@ async function delProduct(id){ if (!confirm('حذف المنتج ده؟')) retur
 function setTab(){ document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab)); render(); }
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; setTab(); });
 $('#refresh').onclick = render;
-timer = setInterval(() => { if (tab !== 'settings' && !$('#sheet').classList.contains('on') && !document.hidden) render(); }, 20000);
+timer = setInterval(() => { if (tab !== 'settings' && tab !== 'search' && !$('#sheet').classList.contains('on') && !document.hidden) render(); }, 20000);
 if (!cfg.base && native) tab = 'settings';
 setTab();
 </script>
