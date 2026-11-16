@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f2a47">
+<title>متتبع امازون مصر</title>
+<style>
+  :root{--navy:#0f2a47;--gold:#c9a227;--bg:#f3f5f8;--card:#fff;--txt:#1b2733;--mut:#6b7a8a;--up:#c0392b;--down:#1e8e3e;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;padding-bottom:70px}
+  header{background:var(--navy);color:#fff;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between}
+  header h1{font-size:18px;margin:0}
+  header small{color:var(--gold);font-size:12px}
+  .wrap{padding:12px}
+  .card{background:var(--card);border-radius:14px;padding:12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;gap:10px}
+  .card img{width:64px;height:64px;object-fit:contain;border-radius:8px;background:#fafafa;flex:none}
+  .card .info{flex:1;min-width:0}
+  .title{font-size:14px;line-height:1.4;max-height:2.8em;overflow:hidden}
+  .price{font-weight:700;font-size:17px;margin-top:4px}
+  .meta{font-size:12px;color:var(--mut);margin-top:2px}
+  .badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:10px;margin-inline-start:6px;font-weight:600}
+  .down{background:#e6f4ea;color:var(--down)} .up{background:#fdecea;color:var(--up)} .gray{background:#eceff3;color:var(--mut)}
+  .tabs{position:fixed;bottom:0;left:0;right:0;background:#fff;display:flex;border-top:1px solid #dde3ea;padding-bottom:env(safe-area-inset-bottom)}
+  .tabs button{flex:1;border:0;background:none;padding:12px 0;font-size:14px;color:var(--mut)}
+  .tabs button.on{color:var(--navy);font-weight:700;border-top:3px solid var(--gold);margin-top:-1px}
+  .fab{position:fixed;bottom:76px;inset-inline-start:16px;width:54px;height:54px;border-radius:50%;border:0;background:var(--gold);color:#fff;font-size:30px;box-shadow:0 3px 8px rgba(0,0,0,.25);z-index:6}
+  input{width:100%;padding:12px;border:1px solid #cdd5df;border-radius:10px;font-size:16px;margin:6px 0;direction:ltr;text-align:left;background:#fff}
+  label{font-size:13px;color:var(--mut);display:block;margin-top:8px}
+  .btn{width:100%;padding:13px;border:0;border-radius:10px;background:var(--navy);color:#fff;font-size:16px;margin-top:8px}
+  .btn.sec{background:#e3e8ee;color:var(--txt)} .btn.red{background:#c0392b}
+  .sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:20;display:none;align-items:flex-end}
+  .sheet.on{display:flex}
+  .sheet .box{background:#fff;width:100%;border-radius:18px 18px 0 0;padding:16px;max-height:88vh;overflow:auto;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+  .empty{text-align:center;color:var(--mut);padding:40px 10px;line-height:1.8}
+  .warn{background:#fff4d6;border:1px solid #f0d98a;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px}
+  svg.chart{width:100%;height:120px;background:#fafbfc;border-radius:10px}
+  .toast{position:fixed;bottom:130px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;z-index:30;display:none}
+</style>
+</head>
+<body>
+<header><div><h1>متتبع امازون مصر</h1><small id="sub">...</small></div><button id="refresh" style="background:none;border:0;color:#fff;font-size:22px">⟳</button></header>
+<div class="wrap" id="view"></div>
+<button class="fab" id="fab">+</button>
+<nav class="tabs">
+  <button data-t="products" class="on">المنتجات</button>
+  <button data-t="changes">التغيرات</button>
+  <button data-t="settings">الإعدادات</button>
+</nav>
+<div class="sheet" id="sheet"><div class="box" id="box"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const native = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const cfg = {
+  base: localStorage.getItem('base') || (native ? '' : location.origin),
+  token: localStorage.getItem('token') || ''
+};
+let tab = 'products', products = [], timer;
+const $ = s => document.querySelector(s);
+const esc = s => (s ?? '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = p => p == null ? '—' : Number(p).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ج.م';
+function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',2500)}
+function ago(ts){if(!ts)return 'لسه';const s=Date.now()/1000-ts;if(s<90)return 'من لحظات';if(s<3600)return 'من '+Math.round(s/60)+' دقيقة';if(s<86400)return 'من '+Math.round(s/3600)+' ساعة';return 'من '+Math.round(s/86400)+' يوم'}
+
+async function api(path, opt = {}) {
+  if (!cfg.base) throw new Error('حدّد عنوان السيرفر من الإعدادات');
+  const r = await fetch(cfg.base.replace(/\/$/, '') + path, {
+    method: opt.method || 'GET',
+    headers: {'Content-Type': 'application/json', 'X-Token': cfg.token},
+    body: opt.body ? JSON.stringify(opt.body) : undefined
+  });
+  if (!r.ok) { let m = r.status; try { m = (await r.json()).detail || m } catch(e){} throw new Error(m); }
+  return r.json();
+}
+
+function openSheet(html){ $('#box').innerHTML = html; $('#sheet').classList.add('on'); }
+function closeSheet(){ $('#sheet').classList.remove('on'); }
+$('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeSheet(); });
+
+async function render() {
+  const v = $('#view'); $('#fab').style.display = tab === 'products' ? 'block' : 'none';
+  try {
+    if (tab === 'products') {
+      products = await api('/api/products');
+      const st = await api('/api/status');
+      $('#sub').textContent = products.length + ' منتج' + (st.blocked_seconds_left ? ' • متوقف مؤقتاً (حظر) ' + Math.ceil(st.blocked_seconds_left/60) + ' د' : ' • شغّال');
+      let h = st.blocked_seconds_left ? '<div class="warn">امازون عملت حظر مؤقت. المتابعة هتكمل لوحدها.</div>' : '';
+      if (!products.length) h += '<div class="empty">مفيش منتجات لسه.<br>دوس على + وحط رابط منتج من amazon.eg</div>';
+      products.forEach(p => {
+        const lastChange = p.last_change ? ago(p.last_change) : '';
+        h += `<div class="card" onclick="openProduct(${p.id})">
+          ${p.image ? `<img src="${esc(p.image)}" loading="lazy">` : '<img>'}
+          <div class="info"><div class="title">${esc(p.title || p.asin)}</div>
+          <div class="price">${p.available ? money(p.price) : 'غير متوفر'}
+            ${p.target_price ? `<span class="badge gray">🎯 ${money(p.target_price)}</span>` : ''}</div>
+          <div class="meta">${p.status === 'ok' ? 'اتفحص ' + ago(p.last_checked) : p.status === 'pending' ? 'في انتظار أول فحص...' : esc(p.status)}${lastChange ? ' • آخر تغيير ' + lastChange : ''}</div></div></div>`;
+      });
+      v.innerHTML = h;
+    } else if (tab === 'changes') {
+      const ch = await api('/api/changes');
+      $('#sub').textContent = 'آخر التغيرات';
+      v.innerHTML = ch.length ? ch.map(c => {
+        let b = '';
+        if (c.kind === 'price') { const d = c.new_price - c.old_price, pc = (d / c.old_price * 100).toFixed(1);
+          b = `<span class="badge ${d < 0 ? 'down' : 'up'}">${d < 0 ? '▼' : '▲'} ${Math.abs(pc)}%</span> ${money(c.old_price)} ← <b>${money(c.new_price)}</b>`; }
+        else b = `<span class="badge gray">تغيّر التوفر</span> ${money(c.new_price)}`;
+        return `<div class="card">${c.image ? `<img src="${esc(c.image)}">` : '<img>'}<div class="info"><div class="title">${esc(c.title)}</div><div class="price" style="font-size:14px">${b}</div><div class="meta">${ago(c.ts)}</div></div></div>`;
+      }).join('') : '<div class="empty">لسه مفيش تغيرات في الأسعار.</div>';
+    } else {
+      $('#sub').textContent = 'الإعدادات';
+      let s = {telegram_chat: '', default_interval: 900, telegram_token_set: false};
+      try { s = await api('/api/settings'); } catch(e) {}
+      v.innerHTML = `
+        <label>عنوان السيرفر (مثال: http://192.168.1.10:8000)</label>
+        <input id="s_base" value="${esc(cfg.base)}" placeholder="http://192.168.1.10:8000">
+        <label>كلمة السر (لو حاططها على السيرفر)</label>
+        <input id="s_token" value="${esc(cfg.token)}" type="password">
+        <button class="btn" onclick="saveConn()">حفظ الاتصال</button>
+        <hr style="margin:18px 0;border:0;border-top:1px solid #dde3ea">
+        <b>إشعارات تليجرام</b>
+        <label>Bot Token ${s.telegram_token_set ? '(محفوظ ✓)' : ''}</label>
+        <input id="s_tt" placeholder="123456:ABC..." type="password">
+        <label>Chat ID</label>
+        <input id="s_tc" value="${esc(s.telegram_chat)}" placeholder="123456789">
+        <label>الفحص كل كام ثانية (الافتراضي 900 = ١٥ دقيقة، الأقل 30)</label>
+        <input id="s_int" type="number" value="${s.default_interval}">
+        <button class="btn" onclick="saveSettings()">حفظ الإعدادات</button>
+        <button class="btn sec" onclick="testNotif()">إرسال إشعار تجريبي</button>
+        <div class="meta" style="margin-top:14px;line-height:1.7">⚠ كل ما قللت الفاصل زاد خطر إن امازون تحظر الـ IP مؤقتاً. ١٥ دقيقة آمنة لأغلب الاستخدام.</div>`;
+    }
+  } catch (e) {
+    $('#sub').textContent = 'مش متصل';
+    v.innerHTML = `<div class="empty">⚠ ${esc(e.message)}<br><br><button class="btn" onclick="tab='settings';setTab()">افتح الإعدادات</button></div>`;
+  }
+}
+
+function saveConn(){ cfg.base = $('#s_base').value.trim(); cfg.token = $('#s_token').value; localStorage.setItem('base', cfg.base); localStorage.setItem('token', cfg.token); toast('اتحفظ'); render(); }
+async function saveSettings(){ try { await api('/api/settings', {method:'POST', body:{telegram_token: $('#s_tt').value || null, telegram_chat: $('#s_tc').value, default_interval: parseInt($('#s_int').value) || null}}); toast('اتحفظ'); render(); } catch(e){ toast(e.message) } }
+async function testNotif(){ try { await api('/api/test-notification', {method:'POST'}); toast('اتبعت - شوف تليجرام'); } catch(e){ toast(e.message) } }
+
+$('#fab').onclick = () => openSheet(`<h3 style="margin:0 0 6px">إضافة منتج</h3>
+  <label>رابط المنتج من amazon.eg</label><input id="n_url" placeholder="https://www.amazon.eg/dp/XXXXXXXXXX">
+  <label>السعر المستهدف (اختياري - هيجيلك إشعار لما ينزل لحد كده)</label><input id="n_tp" type="number" inputmode="decimal">
+  <button class="btn" onclick="addProduct()">إضافة</button>`);
+async function addProduct(){
+  const url = $('#n_url').value.trim(); const tp = parseFloat($('#n_tp').value);
+  try { await api('/api/products', {method:'POST', body:{url, target_price: isNaN(tp) ? null : tp}}); closeSheet(); toast('اتضاف - هيتفحص خلال ثواني'); setTimeout(render, 6000); render(); }
+  catch(e){ toast(e.message) }
+}
+
+async function openProduct(id){
+  const p = products.find(x => x.id === id); if (!p) return;
+  let hist = []; try { hist = await api(`/api/products/${id}/history`); } catch(e){}
+  openSheet(`<div style="display:flex;gap:10px">${p.image ? `<img src="${esc(p.image)}" style="width:80px;height:80px;object-fit:contain">` : ''}<div><div class="title" style="max-height:none">${esc(p.title || p.asin)}</div><div class="price">${p.available ? money(p.price) : 'غير متوفر'}</div></div></div>
+    ${chart(hist)}
+    <label>السعر المستهدف</label><input id="e_tp" type="number" inputmode="decimal" value="${p.target_price ?? ''}">
+    <button class="btn" onclick="saveTarget(${id})">حفظ السعر المستهدف</button>
+    <button class="btn sec" onclick="window.open('${esc(p.url)}','_blank')">فتح على امازون</button>
+    <button class="btn sec" onclick="checkNow(${id})">افحص دلوقتي</button>
+    <button class="btn red" onclick="delProduct(${id})">حذف المنتج</button>`);
+}
+function chart(h){
+  if (h.length < 2) return '<div class="meta" style="margin:10px 0">الرسم البياني هيظهر بعد أول تغيير في السعر.</div>';
+  const ps = h.map(x => x.price), mn = Math.min(...ps), mx = Math.max(...ps), rg = (mx - mn) || 1;
+  const t0 = h[0].ts, t1 = h[h.length-1].ts, tr = (t1 - t0) || 1;
+  const pts = h.map(x => `${10 + (x.ts - t0) / tr * 280},${100 - (x.price - mn) / rg * 80}`).join(' ');
+  return `<svg class="chart" viewBox="0 0 300 120"><polyline points="${pts}" fill="none" stroke="#0f2a47" stroke-width="2"/><text x="6" y="14" font-size="10" fill="#6b7a8a">${money(mx)}</text><text x="6" y="116" font-size="10" fill="#6b7a8a">${money(mn)}</text></svg>`;
+}
+async function saveTarget(id){ const v = parseFloat($('#e_tp').value); try { await api('/api/products/'+id, {method:'PATCH', body: isNaN(v) ? {clear_target:true} : {target_price:v}}); closeSheet(); toast('اتحفظ'); render(); } catch(e){ toast(e.message) } }
+async function checkNow(id){ try { await api(`/api/products/${id}/check`, {method:'POST'}); closeSheet(); toast('هيتفحص خلال ثواني'); setTimeout(render, 8000); } catch(e){ toast(e.message) } }
+async function delProduct(id){ if (!confirm('حذف المنتج ده؟')) return; try { await api('/api/products/'+id, {method:'DELETE'}); closeSheet(); render(); } catch(e){ toast(e.message) } }
+
+function setTab(){ document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab)); render(); }
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; setTab(); });
+$('#refresh').onclick = render;
+timer = setInterval(() => { if (tab !== 'settings' && !$('#sheet').classList.contains('on') && !document.hidden) render(); }, 20000);
+if (!cfg.base && native) tab = 'settings';
+setTab();
+</script>
+</body>
+</html>

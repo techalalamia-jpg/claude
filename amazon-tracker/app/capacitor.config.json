@@ -1,0 +1,12 @@
+{
+  "appId": "com.alalamia.amazontracker",
+  "appName": "متتبع امازون",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  },
+  "plugins": {
+    "CapacitorHttp": { "enabled": true }
+  }
+}
