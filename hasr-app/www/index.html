@@ -1,7 +1,7 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>حصر المستخلصات</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 
 /* Layout: صفحة عربية RTL — قائمة البنود المحفوظة يمين، ملخص الفروق والقيم يسار */
@@ -568,6 +568,175 @@ button.faccell.bad { background: var(--warn-bg); color: var(--warn); }
 .mpick select { width: auto !important; min-width: 0; flex: 0 0 auto; }
 .ord label, .frq-meta label { flex-wrap: wrap; }
 .ord, .ord-list, .frq-head > div { min-width: 0; max-width: 100%; }
+/* شاشة البند */
+#lineEd .lh { margin: 18px 0 8px; font-size: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+#lineEd .lgrid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+#lineEd .lgrid input { width: 100%; }
+#lineEd .hintline .bad, #lineEd .bad { color: var(--warn); font-weight: 700; }
+#lineEd input.mism { border: 2px solid var(--warn) !important; background: var(--warn-bg); }
+.lres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 12px 0 8px; }
+.lr-k { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+.lr-k span { font-size: 12px; color: var(--muted); } .lr-k b { font-size: 16px; }
+.lr-k.big { background: var(--navy); color: var(--on-navy); border-color: var(--navy); } .lr-k.big span { color: var(--on-navy); opacity: .8; }
+.lr-k.big.neg b { color: #FFB4AB; }
+.lord { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; } .lord label { flex: 1 1 100%; margin: 0; }
+#lineEd table.mini tr.cur td { background: var(--ok-bg); font-weight: 700; }
+#lineEd .iss { font-size: 13px; padding: 6px 10px; border-radius: 6px; margin-bottom: 4px; }
+#lineEd .iss.err { background: var(--warn-bg); color: var(--warn); } #lineEd .iss.warn { background: var(--amber-bg); color: var(--amber); } #lineEd .iss.info { background: var(--surface-2); color: var(--muted); }
+.frq-tbl tr.ln { cursor: pointer; }
+@media (max-width: 760px) {
+  .frq-tbl th:nth-child(1), .frq-tbl td:nth-child(1), .frq-tbl tr.ln > td:nth-child(n+4):nth-child(-n+10), .frq-tbl thead th:nth-child(n+4):nth-child(-n+10) { display: none; }
+  .frq-tbl tr.det { display: none; }
+  #tabFrq .frq-tbl td.dsc { min-width: 0; max-width: none; }
+  .lres { grid-template-columns: 1fr 1fr; } .lr-k.big { grid-column: 1 / -1; }
+}
+@media (max-width: 760px) {
+  #tabFrq .frq-tbl table { table-layout: fixed; }
+  #tabFrq .frq-tbl thead th:nth-child(2), #tabFrq .frq-tbl tr.ln > td:nth-child(2) { width: 64px; min-width: 0; }
+  #tabFrq .frq-tbl thead th:nth-child(11), #tabFrq .frq-tbl tr.ln > td:nth-child(11) { width: 104px; font-size: 13px; }
+  #tabFrq .frq-tbl thead th:nth-child(12), #tabFrq .frq-tbl tr.ln > td:nth-child(12) { width: 30px; padding-inline: 2px; }
+  #tabFrq .frq-tbl td.dsc div { font-size: 12.5px; }
+  #tabFrq .frq-tbl td.dsc .sm { display: none; }
+  #tabFrq .frq-tbl tr.grp td { position: static; }
+  #lineEd table.mini thead { display: none; }
+  #lineEd table.mini, #lineEd table.mini tbody { display: block; }
+  #lineEd table.mini tr { display: block; border-bottom: 1px solid var(--line); padding: 6px 4px; }
+  #lineEd table.mini td { display: flex; justify-content: space-between; gap: 10px; border: 0; padding: 3px 8px; white-space: normal; }
+  #lineEd table.mini td::before { content: attr(data-l); color: var(--muted); font-size: 12px; font-weight: 600; }
+  #lineEd table.mini td.hd { font-weight: 700; } #lineEd table.mini td.hd::before { content: none; }
+  #lineEd table.mini td[data-l=""]::before { content: none; }
+  #lineEd .tbl { overflow: visible; }
+}
+@media (max-width: 760px) { #lineEd table.mini td { direction: rtl; text-align: right; } }
+ol.steps { margin: 0 0 10px; padding-inline-start: 22px; display: grid; gap: 8px; font-size: 13.5px; }
+ol.steps li { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+ol.steps .num { display: inline-block; margin-top: 3px; color: var(--muted); }
+ol.steps .num b { color: var(--fg); }
+table.mini.fx tr.tot td { background: var(--surface-2); font-weight: 700; border-top: 2px solid var(--navy); }
+table.mini td.neg { color: var(--warn); }
+@media (max-width: 760px) { #lineEd table.mini.fx tr.tot { background: var(--surface-2); border-radius: 6px; } }
+
+/* =====================================================================
+   الهوية الجديدة — العالمية للمقاولات
+   كحلي حبر + نحاسي واحد للتأكيد، عناوين وأرقام بخط كوفي هندسي (Noto Kufi Arabic)
+   والنص بخط IBM Plex Sans Arabic. الحدة في الأرقام والإجماليات، والباقي هادي.
+   ===================================================================== */
+:root {
+  --ink: #0F2240; --ink-2: #1B3358; --brass: #B98A2E; --brass-soft: #F6EEDC;
+  --bg: #F2F4F7; --surface: #FFFFFF; --surface-2: #F7F8FA; --fg: #142033; --muted: #5D6878; --line: #DFE3EA;
+  --navy: #0F2240; --on-navy: #FFFFFF; --gold-fill: #B98A2E; --gold: #8A6418; --gold-bg: #FBF5E6; --alloc-bg: #EAF0F8;
+  --display: "Noto Kufi Arabic", "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+  --r-lg: 14px; --r-md: 10px; --r-sm: 8px;
+}
+:root[data-theme=dark] {
+  --ink: #0A1424; --ink-2: #16253F; --brass: #D4A64A; --brass-soft: #2A2312;
+  --bg: #0B1220; --surface: #121B2D; --surface-2: #18233A; --fg: #E8ECF3; --muted: #93A0B5; --line: #24324D;
+  --navy: #DCE5F4; --on-navy: #0B1220; --gold-fill: #D4A64A; --gold: #E2BC6A; --gold-bg: #2A2312; --alloc-bg: #1A2A47;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme=light]) {
+  --ink: #0A1424; --ink-2: #16253F; --brass: #D4A64A; --brass-soft: #2A2312;
+  --bg: #0B1220; --surface: #121B2D; --surface-2: #18233A; --fg: #E8ECF3; --muted: #93A0B5; --line: #24324D;
+  --navy: #DCE5F4; --on-navy: #0B1220; --gold-fill: #D4A64A; --gold: #E2BC6A; --gold-bg: #2A2312; --alloc-bg: #1A2A47;
+} }
+
+body { background: var(--bg); color: var(--fg); letter-spacing: 0; -webkit-font-smoothing: antialiased; }
+h1, h2, h3, .frq-head h2, aside.sum h2, .sec-title, .code { font-family: var(--display); letter-spacing: 0; }
+
+/* الهيدر: شريط حبر واحد بخط نحاسي رفيع تحته */
+header.top { background: var(--ink) !important; border-bottom: 3px solid var(--brass) !important; box-shadow: none !important; padding-block: 10px !important; }
+header.top h1 { font-family: var(--display); font-size: 22px !important; font-weight: 700; color: #FFFFFF !important; }
+header.top p#projName { color: #D9C08A !important; font-size: 12.5px; text-decoration: none; border-bottom: 1px dashed rgba(217,192,138,.5); display: inline-block !important; }
+.plate { border: 0; border-radius: 10px; padding: 4px 8px; }
+.plate img { height: 50px; }
+.dots3 b { background: #D9C08A !important; }
+
+/* التبويبات (ديسكتوب): شريط فاتح وخط نحاسي تحت التبويب المفتوح */
+@media (min-width: 761px) {
+  .tabs { background: var(--surface) !important; border: 1px solid var(--line) !important; border-top: 1px solid var(--line) !important; border-radius: var(--r-lg); padding: 4px 6px; gap: 2px !important; box-shadow: 0 1px 0 rgba(15,34,64,.04); }
+  .tabs button { color: var(--muted) !important; border: 0 !important; border-radius: var(--r-sm) !important; padding: 10px 16px !important; margin: 0 !important; position: relative; font-weight: 600; }
+  .tabs button:hover { color: var(--fg) !important; background: var(--surface-2) !important; }
+  .tabs button[aria-selected=true] { color: var(--fg) !important; background: var(--surface-2) !important; }
+  .tabs button[aria-selected=true]::after { content: ""; position: absolute; inset-inline: 14px; bottom: -5px; height: 3px; border-radius: 3px; background: var(--brass); }
+}
+/* شريط الموبايل اللي تحت */
+@media (max-width: 760px) {
+  .tabs { background: var(--surface) !important; border-top: 1px solid var(--line) !important; box-shadow: 0 -6px 18px rgba(15,34,64,.08) !important; }
+  .tabs button { color: var(--muted) !important; border-top: 2px solid transparent !important; }
+  .tabs button[aria-selected=true] { color: var(--fg) !important; background: transparent !important; border-top-color: var(--brass) !important; }
+  .tabs button[aria-selected=true] .ic { color: var(--brass); }
+}
+.tabs .ic svg { width: 21px; height: 21px; display: block; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+/* أزرار ومدخلات */
+button { border-radius: var(--r-sm); border-color: var(--line); transition: background .15s, border-color .15s; }
+button:hover { border-color: var(--muted); }
+button.primary { background: var(--ink-2) !important; border-color: var(--ink-2) !important; color: #FFFFFF !important; box-shadow: none !important; }
+:root[data-theme=dark] button.primary { background: var(--brass) !important; border-color: var(--brass) !important; color: #1A1406 !important; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme=light]) button.primary { background: var(--brass) !important; border-color: var(--brass) !important; color: #1A1406 !important; } }
+button.primary:disabled { opacity: .45; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--brass) !important; outline-offset: 2px; }
+input[type=text], input[type=password], select, textarea { border-radius: var(--r-sm) !important; border: 1px solid var(--line) !important; background: var(--surface) !important; color: var(--fg); }
+input.q { background: var(--gold-bg) !important; }
+input:focus, select:focus, textarea:focus { border-color: var(--brass) !important; }
+
+/* الكروت والحاويات: نصف قطر أكبر للحاويات، وظل خفيف واحد */
+.entry, .empty-state, aside.sum, .frq-card, .frq-kpis > div, .frq-kpis > button, .frq-iss, .ord, .idx-add .box, .frq-nav, .kpi, .card, .rc, .tile, .tcard, .tbl, .list > table { border-radius: var(--r-lg) !important; }
+aside.sum { border-top: 1px solid var(--line) !important; box-shadow: 0 1px 2px rgba(15,34,64,.05); }
+.frq-card { border-top: 1px solid var(--line) !important; box-shadow: 0 1px 2px rgba(15,34,64,.05); }
+.frq-card .h b { font-family: var(--display); font-size: 16px; }
+.frq-card .kv b.big { font-family: var(--display); color: var(--fg) !important; }
+.frq-card:hover { transform: none; border-color: var(--brass); box-shadow: 0 6px 20px rgba(15,34,64,.10); }
+
+/* الجداول: رأس فاتح، أرقام واضحة، صف الإجمالي بخط نحاسي */
+th { background: var(--surface-2) !important; color: var(--muted) !important; border-bottom: 1px solid var(--line) !important; font-weight: 600; font-size: 12.5px; }
+td { border-top: 1px solid var(--line); }
+table tbody tr:nth-child(even) td { background-color: transparent; }
+.list table tbody tr.row:hover td, .frq-tbl tr.ln:hover td, tr[data-facop]:hover td { background: var(--alloc-bg) !important; }
+tr.tot td, table.mini.fx tr.tot td, table.mini.hist tr.tot td { background: var(--surface-2) !important; border-top: 2px solid var(--brass) !important; font-weight: 700; }
+.frq-tbl tr.grp td { background: var(--surface-2) !important; color: var(--fg) !important; font-family: var(--display); font-size: 13px; border-inline-start: 3px solid var(--brass); }
+td.num b, .num b { font-variant-numeric: tabular-nums; }
+
+/* الأرقام الكبيرة (الشيء الوحيد اللي ليه حضور قوي) */
+.frq-kpis b, .lr-k b, .kpi .v, .cnt b, .grand .big span { font-family: var(--display) !important; font-weight: 700; }
+.frq-kpis .tot, .lr-k.big { background: var(--ink-2) !important; border: 0 !important; border-bottom: 3px solid var(--brass) !important; color: #FFFFFF !important; }
+.frq-kpis .tot span, .lr-k.big span { color: #D9C08A !important; opacity: 1 !important; }
+.frq-kpis .tot b, .lr-k.big b { color: #FFFFFF; font-size: 24px; }
+.grand { background: var(--ink-2) !important; border-top: 0 !important; border-bottom: 3px solid var(--brass) !important; border-radius: var(--r-md) !important; }
+
+/* التبويبات الداخلية لفروق الأسعار */
+.frq-nav { box-shadow: none; }
+.frq-nav button span { display: none; }
+.frq-nav button[aria-pressed=true] { background: var(--ink-2) !important; color: #FFFFFF !important; }
+:root[data-theme=dark] .frq-nav button[aria-pressed=true] { background: var(--brass) !important; color: #1A1406 !important; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme=light]) .frq-nav button[aria-pressed=true] { background: var(--brass) !important; color: #1A1406 !important; } }
+.seg button[aria-pressed=true], .frq-stats button[aria-pressed=true], .frq-seq b { background: var(--ink-2) !important; color: #FFFFFF !important; border-color: var(--ink-2) !important; }
+
+/* البادجات والتنبيهات */
+.badge { border-radius: 6px; font-weight: 600; }
+.frq-prev, .frq-alert, .frq-ro { border-radius: var(--r-md) !important; }
+.chip { border-radius: 6px; }
+
+/* شاشات التفاصيل */
+.sheet { border-radius: var(--r-lg) !important; border-top: 3px solid var(--brass) !important; }
+.sheet .sh-head { border-radius: var(--r-lg) var(--r-lg) 0 0 !important; }
+#lineEd .lh { font-family: var(--display); font-size: 14.5px; padding-top: 14px; border-top: 1px solid var(--line); }
+#lineEd .lh:first-child { border-top: 0; padding-top: 0; }
+.frqhist { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+.frqhist .el.tot { background: var(--ink-2); color: #FFFFFF; border-color: var(--ink-2); }
+.frqline .f, .frqhist .f { font-weight: 700; color: var(--muted); }
+table.mini.hist tr.go { cursor: pointer; }
+table.mini.hist tr.go:hover td { background: var(--alloc-bg) !important; }
+table.mini.hist tr.cur td { background: var(--brass-soft) !important; }
+
+/* حركة واحدة بس: فتح الشاشات */
+@media (prefers-reduced-motion: no-preference) { .overlay:not([hidden]) .sheet { animation: shIn .18s ease-out; } @keyframes shIn { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } } }
+@media (max-width: 760px) { header.top h1 { font-size: 18px !important; } .plate img { height: 36px; } }
+@media (max-width: 760px) {
+  #lineEd table.mini tr.tot td { border-top: 0 !important; }
+  #lineEd table.mini tr.tot { border-top: 2px solid var(--brass); background: var(--surface-2); }
+  #lineEd table.mini td[data-l=""]:empty { display: none; }
+}
+.kpi { border-top-color: var(--line) !important; }
 </style>
 
 <header class="top">
@@ -688,6 +857,7 @@ button.faccell.bad { background: var(--warn-bg); color: var(--warn); }
 <div class="overlay" id="overlay4" hidden style="z-index:49"><div class="sheet" role="dialog" aria-modal="true" id="newsEd"></div></div>
 <div class="overlay" id="overlay6" hidden style="z-index:53"><div class="sheet" role="dialog" aria-modal="true" id="projEd"></div></div>
 <div class="overlay" id="overlay5" hidden style="z-index:52"><div class="sheet" role="dialog" aria-modal="true" id="recEd"></div></div>
+<div class="overlay" id="overlay8" hidden style="z-index:44"><div class="sheet" role="dialog" aria-modal="true" id="lineEd"></div></div>
 <div class="overlay" id="overlay7" hidden style="z-index:46"><div class="sheet" role="dialog" aria-modal="true" id="frqEd"></div></div>
 <div id="toast" class="toast" hidden></div>
 <div class="overlay" id="cfm" hidden style="z-index:300"><div class="cfm-box" role="alertdialog" aria-modal="true"><p id="cfmMsg"></p><div class="acts"><button type="button" class="primary" id="cfmOk">نعم</button><button type="button" id="cfmNo">إلغاء</button></div></div></div>
@@ -1018,7 +1188,7 @@ function refreshSummary() {
   $('gH').textContent = fmt(gH); $('gM').textContent = fmt(gM); $('gS').textContent = fmt(gS); $('gD').textContent = sgn(gH - gM, fmt);
   $('cItems').textContent = items.size; $('cDiff').textContent = nDiff; $('cExc').textContent = nExc;
 }
-function renderAll() { if (uiReady) moneyHidden = !permMoney(); syncData(); if (uiReady) applyPerms(); if (curTab === 'loc') renderLoc(); if (curTab === 'dash') renderDash(); if (curTab === 'news') renderNews(); if (curTab === 'proj') renderProj(); if (curTab === 'more') renderMore(); if (curTab === 'mod' && $('modList')) renderModList(); if (curTab === 'mod' && modName === 'notif') renderMod(); applyRole(); renderCat(); renderItems(); renderInv(); refreshSummary(); if (draft) renderSheetHist(); if (curTab === 'frq' && typeof renderFrq === 'function' && !$('tabFrq').contains(document.activeElement) && $('overlay7').hidden) renderFrq(); }
+function renderAll() { if (uiReady) moneyHidden = !permMoney(); syncData(); if (uiReady) applyPerms(); if (curTab === 'loc') renderLoc(); if (curTab === 'dash') renderDash(); if (curTab === 'news') renderNews(); if (curTab === 'proj') renderProj(); if (curTab === 'more') renderMore(); if (curTab === 'mod' && $('modList')) renderModList(); if (curTab === 'mod' && modName === 'notif') renderMod(); applyRole(); renderCat(); renderItems(); renderInv(); refreshSummary(); if (draft) renderSheetHist(); if (curTab === 'frq' && typeof renderFrq === 'function' && !$('tabFrq').contains(document.activeElement) && $('overlay7').hidden && $('overlay8').hidden) renderFrq(); }
 ['itemsList', 'invList', 'invLog'].forEach((id) => {
   const el = $(id);
   el.addEventListener('click', (ev) => { const tr = ev.target.closest('tr[data-code]'); if (tr) openSheet(tr.dataset.code); });
@@ -1670,6 +1840,7 @@ window.__back = function () {
   if (!$('overlay4').hidden) { closeNews(); return 1; }
   if (!$('overlay3').hidden) { closeSettings(); return 1; }
   if (!$('overlay7').hidden) { closeFacEd(); return 1; }
+  if (!$('overlay8').hidden) { closeLine(); return 1; }
   if (!$('overlay2').hidden) { closeEditor(); return 1; }
   if (curTab === 'frq' && frqView !== 'stmts') { frqGo(frqView === 'stmt' ? 'stmts' : 'stmts'); return 1; }
   if (draft && !$('overlay').hidden) { tryClose(); return 1; }
@@ -2683,7 +2854,7 @@ function frqIssues(S, C) {
     if (r.from === 'none') out.push({ lvl: 'err', i, msg: 'البند مالوش معاملات تغير.' });
     if (r.sumP > FRQ_MAX + 1e-9) out.push({ lvl: 'err', i, msg: `مجموع نسب العناصر ${pctTxt(r.sumP)} — أكبر من 95%.` });
     if (r.from === 'file') out.push({ lvl: 'warn', i, msg: 'البند مالوش معاملات تغير في المقايسة — الحساب ماشي مؤقتاً على النسب المكتوبة في ملف المستخلص.' });
-    if (r.from === 'ap' && L.el && L.el.length && !sameEls(L.el, F.fx[L.c])) out.push({ lvl: 'warn', i, msg: 'النسب اللي كانت في ملف المستخلص مختلفة عن معاملات البند — الحساب ماشي على معاملات البند.' });
+    if (r.from === 'ap' && L.el && L.el.length && !sameEls(L.el, F.fx[L.c])) out.push({ lvl: 'warn', i, msg: `ملف الإكسيل بتاع جاري ${S.no} كان مكتوب فيه للبند ده نسب مختلفة (${L.el.map((e) => e[0] + ' ' + pctTxt(e[1])).join(' + ')}) عن معاملات البند المعتمدة (${F.fx[L.c].map((e) => e[0] + ' ' + pctTxt(e[1])).join(' + ')}). البرنامج حاسب بالمعتمدة.` });
     r.miss.forEach((n) => { [r.base, S.month].forEach((m) => { if (m && idxVal(n, m) == null) { const k = m + '|' + n; missM[k] = (missM[k] || 0) + 1; } }); });
     [['I', 'السابقة'], ['J', 'الحالية']].forEach(([k, t]) => { const v = +L[k]; if (L[k] != null && L[k] !== '' && (v < 0 || v > 1)) out.push({ lvl: 'warn', i, msg: `نسبة الصرف ${t} ${pctTxt(v)} — خارج 0–100%.` }); });
     if (L.w !== 's' && (+L.G || 0) < (+L.E || 0) - 1e-9) out.push({ lvl: 'warn', i, msg: 'الكمية الإجمالية أقل من السابقة في الأعمال.' });
@@ -2968,7 +3139,7 @@ async function saveFacEd(clear) {
   if (clear) { delete F.fx[facEd.code]; delete F.src[facEd.code]; delete F.note[facEd.code]; }
   else { F.fx[facEd.code] = els; F.src[facEd.code] = facEd.src === 'review' ? 'ok' : facEd.src; if (facEd.note) F.note[facEd.code] = facEd.note; else delete F.note[facEd.code]; if (F.src[facEd.code] === 'ok') delete F.alt[facEd.code]; }
   try { await frqSave(F); } catch (e) { toast('تعذر الحفظ — الصلاحية للأدمن بس'); return; }
-  closeFacEd(); toast('اتحفظت المعاملات ✓ — اتطبقت على كل المستخلصات'); renderFrq(); { const fl = $('frqLine'); if (fl && draft) fl.innerHTML = frqFacLine(draft.code); } if (curTab === 'cat') renderCat();
+  closeFacEd(); toast('اتحفظت المعاملات ✓ — اتطبقت على كل المستخلصات'); renderFrq(); if (frqLi != null && !$('overlay8').hidden) renderLine(); { const fl = $('frqLine'); if (fl && draft) fl.innerHTML = frqFacLine(draft.code); } if (curTab === 'cat') renderCat();
 }
 function closeFacEd() { $('overlay7').hidden = true; facEd = null; document.body.style.overflow = ''; }
 
@@ -3043,6 +3214,7 @@ function frqClick(ev) {
   const fv = t.closest('[data-fv]'); if (fv) { frqGo(fv.dataset.fv); return; }
   const op = t.closest('[data-open]'); if (op) { frqGo('stmt', op.dataset.open); return; }
   const fo = t.closest('[data-facop]'); if (fo) { openFacEd(fo.dataset.facop); return; }
+  { const tr = t.closest('tr.ln'); if (tr && !t.closest('input,button,select,a,.combo')) { openLine(+tr.dataset.i); return; } }
   const tg = t.closest('[data-tg]'); if (tg) { const i = +tg.dataset.tg; if (frqOpen.has(i)) frqOpen.delete(i); else frqOpen.add(i); renderFrq(); return; }
   const pt = t.closest('[data-part]'); if (pt) { frqF.part = pt.dataset.part; renderFrq(); return; }
   const fs = t.closest('[data-fst]'); if (fs) { facF.st = fs.dataset.fst; renderFrq(); return; }
@@ -3213,7 +3385,7 @@ async function exportStmt(S) {
 /* ---------- معاملات التغير من المقايسات ---------- */
 function frqFacLine(code) {
   const e = frqFac().fx[code] || [];
-  return `<span class="f">🧩 معاملات التغير:</span> ${e.length ? e.map((x) => `<span class="el">${esc(x[0])} <b>${pctTxt(x[1])}</b></span>`).join('') + ` <span class="sm">المجموع ${pctTxt(facSum(e))}</span>` : '<span class="badge w">مفيش معاملات</span>'} <button type="button" class="small" data-facq="${esc(code)}">${frqCanEdit() ? 'تعديل' : 'عرض'}</button>`;
+  return itemAcrossShort(code) + `<span class="f">معاملات التغير:</span> ${e.length ? e.map((x) => `<span class="el">${esc(x[0])} <b>${pctTxt(x[1])}</b></span>`).join('') + ` <span class="sm">المجموع ${pctTxt(facSum(e))}</span>` : '<span class="badge w">مفيش معاملات</span>'} <button type="button" class="small" data-facq="${esc(code)}">${frqCanEdit() ? 'تعديل' : 'عرض'}</button>`;
 }
 function frqFacCell(code) {
   const e = frqFac().fx[code] || [], s = facSum(e);
@@ -3222,8 +3394,134 @@ function frqFacCell(code) {
 ['catList', 'sheet'].forEach((id) => $(id).addEventListener('click', (ev) => { const b = ev.target.closest('[data-facq]'); if (!b) return; ev.stopPropagation(); ev.preventDefault(); openFacEd(b.dataset.facq); }, true));
 
 /* ---------- رقم النسخة ---------- */
-const HASR_WEB_VER = '2026.11.17-0825';
+const HASR_WEB_VER = '2026.11.17-0933';
 function appVer() { return window.HASR_APK_VER ? `نسخة التطبيق: أندرويد ${window.HASR_APK_VER} · البرنامج ${HASR_WEB_VER}` : `نسخة البرنامج: ${HASR_WEB_VER}`; }
+
+/* ---------- شاشة البند بكل تفاصيله (بتفتح لما تدوس على البند) ---------- */
+let frqLi = null;
+function openLine(i) { if (!frqDraft || !frqDraft.lines[i]) return; frqLi = i; renderLine(); $('overlay8').hidden = false; document.body.style.overflow = 'hidden'; $('lineEd').scrollTop = 0; }
+function closeLine() { $('overlay8').hidden = true; frqLi = null; document.body.style.overflow = ''; renderFrq(); }
+function fxRowsHTML(r, H) {
+  H = +H || 0; let su = 0;
+  const rows = r.rows.map((x) => { const u = x.m == null ? null : H * x.p * x.m; if (u != null) su += u;
+    return `<tr class="${x.m == null ? 'miss' : ''}"><td data-l="العنصر" class="hd">${esc(x.n)}</td><td data-l="النسبة" class="num">${pctTxt(x.p)}</td><td data-l="مؤشر الأساس ← الحساب" class="num"><span dir="ltr">${x.k == null ? '—' : x.k} → ${x.l == null ? '—' : x.l}</span></td><td data-l="نسبة الزيادة" class="num ${x.m < 0 ? 'neg' : ''}">${x.m == null ? 'رقم قياسي ناقص' : pctTxt(x.m)}</td><td data-l="تغير سعر الوحدة" class="num" title="الفئة × النسبة × الزيادة">${u == null ? '—' : fmtP(u)}</td><td data-l="قيمة العنصر" class="num"><b>${fmt(x.v)}</b></td></tr>`; }).join('');
+  if (!rows) return '<tr><td colspan="6">مفيش عناصر</td></tr>';
+  return rows + `<tr class="tot"><td data-l="" class="hd">الإجمالي</td><td data-l="مجموع النسب" class="num">${pctTxt(r.sumP)}</td><td data-l=""></td><td data-l="زيادة السعر الكلية" class="num">${H ? pctTxt(su / H) : '—'}</td><td data-l="تغير سعر الوحدة" class="num"><b>${fmtP(su)}</b></td><td data-l="فرق السعر للبند" class="num"><b>${fmt(r.tot)}</b></td></tr>`;
+}
+function calcStepsHTML(L, r) {
+  const G = +L.G || 0, J = +L.J || 0, E = +L.E || 0, I = +L.I || 0, H = +L.H || 0, su = r.rows.reduce((a, x) => a + (x.m == null ? 0 : H * x.p * x.m), 0);
+  return `<ol class="steps">
+    <li><b>الكمية المستحقة</b> = الإجمالية × الصرف الحالي − السابقة × الصرف السابق<br><span class="num" dir="ltr">${fmtQ(G)} × ${pctTxt(J)} − ${fmtQ(E)} × ${pctTxt(I)} = <b>${fmtQ(r.N)}</b></span></li>
+    <li><b>تغير سعر الوحدة</b> = الفئة × مجموع (نسبة العنصر × نسبة زيادته)<br><span class="num" dir="ltr">${fmtP(H)} × ${H ? pctTxt(su / H) : '0%'} = <b>${fmtP(su)}</b></span></li>
+    <li><b>فرق السعر للبند</b> = الكمية المستحقة × تغير سعر الوحدة<br><span class="num" dir="ltr">${fmtQ(r.N)} × ${fmtP(su)} = <b>${fmt(r.tot)}</b></span></li></ol>`;
+}
+function lineResHTML(L, r) {
+  return `<div class="lr-k"><span>الكمية المستحقة</span><b class="num">${fmtQ(r.N)}</b></div><div class="lr-k"><span>مجموع نسب العناصر</span><b class="num">${pctTxt(r.sumP)}</b></div><div class="lr-k big ${r.tot < -0.005 ? 'neg' : ''}"><span>فرق السعر للبند</span><b class="num">${fmt(r.tot)}</b></div>`;
+}
+function renderLine() {
+  const i = frqLi, S = frqDraft, L = S.lines[i], ro = !frqCanEdit(), dates = frqOrd().dates, it = L.c ? byCode.get(L.c) : null;
+  const r = calcLine(L, S, frqFac(), dates), iss = frqIssues(S).filter((x) => x.i === i), pc = prevCheck(S), pm = pc.m.get(i);
+  const vis = S.lines.map((x, j) => j);
+  const pos = vis.indexOf(i), prevI = pos > 0 ? vis[pos - 1] : null, nextI = pos < vis.length - 1 ? vis[pos + 1] : null;
+  const pin = (v) => (v == null || v === '' ? '' : String(Math.round(v * 1e6) / 1e4)), qin = (v) => (v == null || v === '' ? '' : String(v));
+  const fld = (k, lab, val, cls, hint) => `<div><label class="f">${lab}</label><input type="text" class="q ${cls || ''}${pm && ((k === 'E' && pm.dE) || (k === 'I' && pm.dI)) ? ' mism' : ''}" inputmode="decimal" data-lf="${k}" value="${val}" ${ro ? 'readonly' : ''}>${hint ? `<div class="hintline">${hint}</div>` : ''}</div>`;
+  const hE = pm && pm.dE ? `<span class="bad">غير مطابقة — في جاري ${pc.P.no}: ${fmtQ(pm.eE)}</span>` : pc.P ? `من إجمالي جاري ${pc.P.no}` : '';
+  const hI = pm && pm.dI ? `<span class="bad">غير مطابقة — في جاري ${pc.P.no}: ${pctTxt(pm.eI)}</span>` : pc.P ? `من نسبة جاري ${pc.P.no} الحالية` : '';
+  const tiers = it ? it.p.map((p, k) => ({ k, p, q: it.q[k], o: it.l[k] })).filter((x) => x.p > 0 || x.q > 0) : [];
+  $('lineEd').innerHTML = `<div class="sh-head"><div class="sh-title"><div class="ttl"><span class="code">بند ${esc(L.n || '')}</span>${L.c ? `<span class="tag mono">${esc(L.c)}</span>` : '<span class="badge a">مش مربوط بالمقايسة</span>'}<span class="tag">${esc(L.t || '')}</span><span class="tag">${L.w === 's' ? 'تشوينات' : 'أعمال'}</span><span class="tag">جاري ${S.no || ''} · ${ymLabel(S.month)}</span></div><button type="button" class="x ghost" data-le="close" aria-label="إغلاق">✕</button></div><p class="desc">${esc(L.d || (it && it.d) || '')}</p>${it && it.u ? `<div class="sm">الوحدة: ${esc(it.u)}</div>` : ''}</div>
+  <div class="sh-body">
+    <h4 class="lh">الكميات ونسب الصرف</h4>
+    <div class="inputs lgrid">${fld('E', 'الكمية السابقة', qin(L.E), '', hE)}${fld('G', 'الكمية الإجمالية', qin(L.G), '', '')}${fld('I', 'نسبة الصرف السابقة %', pin(L.I), 'p', hI)}${fld('J', 'نسبة الصرف الحالية %', pin(L.J), 'p', '')}${fld('H', 'الفئة (السعر)', qin(L.H), '', '')}</div>
+    <div class="lres" data-lr>${lineResHTML(L, r)}</div>
+    ${pm && pm.has && !ro ? `<button type="button" class="small" data-le="syncp">خلّي السابقة = جاري ${pc.P.no}</button>` : ''}
+
+    <h4 class="lh">تفصيل الحساب</h4>
+    <div data-lst>${calcStepsHTML(L, r)}</div>
+    <div class="tbl"><table class="mini fx"><thead><tr><th>العنصر</th><th>النسبة</th><th>مؤشر الأساس (${ymLabel(r.base)}) ← الحساب (${ymLabel(S.month)})</th><th>نسبة الزيادة</th><th>تغير سعر الوحدة</th><th>قيمة العنصر</th></tr></thead><tbody data-lfx>${fxRowsHTML(r, L.H)}</tbody></table></div>
+    <p class="note">تغير سعر الوحدة لكل عنصر = الفئة × نسبة العنصر × نسبة زيادة رقمه القياسي، وقيمة العنصر = الكمية المستحقة × تغير سعر الوحدة بتاعه.</p>
+
+    <h4 class="lh">فروق أسعار البند ده في كل المستخلصات</h4>
+    ${L.c ? itemAcrossHTML(L.c, S.code, i) : '<p class="note">البند مش مربوط بالمقايسة.</p>'}
+
+    <h4 class="lh">الأسعار وأوامر الإسناد</h4>
+    <div class="lord"><label class="f">أمر الإسناد اللي البند ماشي عليه في المستخلص</label><select data-le-o ${ro ? 'disabled' : ''}>${ORDERS.map((o) => `<option ${o === L.o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select><span class="chip ${dates[L.o] ? '' : 'bad'}">شهر الأساس: ${dates[L.o] ? ymLabel(dates[L.o]) : 'من غير تاريخ'}</span></div>
+    ${tiers.length ? `<div class="tbl"><table class="mini"><thead><tr><th>الشريحة</th><th>الكمية</th><th>السعر</th><th>أمر الإسناد</th><th>تاريخ الإسناد</th><th></th></tr></thead><tbody>
+      ${tiers.map((x) => { const cur = x.o === L.o && Math.abs((+L.H || 0) - x.p) < 0.005; return `<tr class="${cur ? 'cur' : ''}"><td data-l="الشريحة" class="hd">${esc(TIERS[x.k] || 'شريحة ' + (x.k + 1))}</td><td data-l="الكمية" class="num">${fmtQ(x.q || 0)}</td><td data-l="السعر" class="num"><b>${fmtP(x.p)}</b></td><td data-l="أمر الإسناد">${esc(x.o)}</td><td data-l="تاريخ الإسناد" class="num">${dates[x.o] ? ymLabel(dates[x.o]) : '<span class="badge w">من غير تاريخ</span>'}</td><td data-l="">${cur ? '<span class="badge ok">المستخدم</span>' : ro || !x.p ? '' : `<button type="button" class="small" data-le-p="${x.k}">استخدم السعر ده</button>`}</td></tr>`; }).join('')}
+    </tbody></table></div>` : '<p class="note">البند مش مربوط ببند في المقايسة، فمفيش أسعار شرايح.</p>'}
+
+    <h4 class="lh">معاملات التغير ${L.c ? `<button type="button" class="small" data-facop="${esc(L.c)}">🧩 تعديل المعاملات</button>` : ''}</h4>
+    <p class="note">${r.from === 'ap' ? 'المعاملات ثابتة للبند في المشروع — أي تعديل بيتطبق على كل المستخلصات.' : r.from === 'file' ? 'البند مالوش معاملات في المقايسة — الحساب ماشي مؤقتاً على النسب اللي كانت في ملف المستخلص.' : 'البند مالوش معاملات.'}</p>
+    ${L.el && L.el.length && r.from === 'ap' && !sameEls(L.el, frqFac().fx[L.c]) ? `<div class="frq-prev bad"><span>ملف إكسيل جاري ${S.no} كان حاسب البند ده بنسب تانية: <b>${L.el.map((e) => esc(e[0]) + ' ' + pctTxt(e[1])).join(' + ')}</b>. البرنامج حاسب بمعاملات البند المعتمدة اللي فوق. لو نسب الملف هي الصح اعتمدها، وهتتطبق على كل المستخلصات.</span>${ro ? '' : '<button type="button" class="small" data-le="adoptel">اعتمد نسب الملف للبند</button>'}</div>` : ''}
+
+    ${iss.length ? `<h4 class="lh">ملاحظات المراجعة</h4>${iss.map((x) => `<div class="iss ${x.lvl}">${esc(x.msg)}</div>`).join('')}` : ''}
+    ${ro ? '' : `<h4 class="lh">الربط بالمقايسة</h4><div class="combo"><input type="text" id="lineRelink" autocomplete="off" placeholder="${L.c ? 'تغيير البند المربوط…' : 'اربط ببند من المقايسة…'}" role="combobox" aria-expanded="false"><ul class="pop" id="lineRelinkPop" role="listbox" hidden></ul></div>
+    <div class="acts"><label class="sm">النوع <select data-le-w><option value="w" ${L.w !== 's' ? 'selected' : ''}>أعمال</option><option value="s" ${L.w === 's' ? 'selected' : ''}>تشوينات</option></select></label><span class="sp"></span><button type="button" class="ghost danger small" data-le="del">حذف البند من المستخلص</button></div>`}
+  </div>
+  <div class="sh-foot"><button type="button" ${prevI == null ? 'disabled' : ''} data-le-go="${prevI}">→ البند السابق</button><button type="button" ${nextI == null ? 'disabled' : ''} data-le-go="${nextI}">البند التالي ←</button><span class="sp"></span>${!ro && frqDirty ? '<span class="unsaved">فيه تعديلات — احفظ المستخلص</span><button type="button" class="primary" data-le="save">حفظ</button>' : ''}<button type="button" data-le="close">إغلاق</button></div>`;
+  const inp = $('lineRelink'); if (inp) attachCombo(inp, $('lineRelinkPop'), (it2) => { L.c = it2.c; L.t = it2.t; L.u = it2.u; delete L.lm; L.o = orderFor(it2, L.H); frqDirty = true; renderLine(); toast('اتربط بـ ' + it2.c); }, { min: 1 });
+}
+$('lineEd').addEventListener('input', (ev) => {
+  const t = ev.target; if (!t.dataset.lf || frqLi == null) return;
+  const L = frqDraft.lines[frqLi]; let v = pn(t.value); if (t.classList.contains('p') && v != null) v = v / 100; L[t.dataset.lf] = v; frqDirty = true;
+  const r = calcLine(L, frqDraft, frqFac(), frqOrd().dates); $('lineEd').querySelector('[data-lr]').innerHTML = lineResHTML(L, r); $('lineEd').querySelector('[data-lfx]').innerHTML = fxRowsHTML(r, L.H); $('lineEd').querySelector('[data-lst]').innerHTML = calcStepsHTML(L, r);
+  const ft = $('lineEd').querySelector('.sh-foot'); if (ft && !ft.querySelector('[data-le=save]') && frqCanEdit()) ft.querySelector('.sp').insertAdjacentHTML('afterend', '<span class="unsaved">فيه تعديلات — احفظ المستخلص</span><button type="button" class="primary" data-le="save">حفظ</button>');
+});
+$('lineEd').addEventListener('change', (ev) => {
+  const t = ev.target; if (frqLi == null) return; const L = frqDraft.lines[frqLi];
+  if (t.hasAttribute('data-le-o')) { L.o = t.value; const it = L.c ? byCode.get(L.c) : null; const p = priceFor(it, L.o); if (p != null && it && it.l.includes(L.o)) L.H = p; frqDirty = true; renderLine(); }
+  if (t.hasAttribute('data-le-w')) { L.w = t.value; frqDirty = true; renderLine(); }
+});
+$('lineEd').addEventListener('click', (ev) => {
+  const t = ev.target; if (frqLi == null) return; const L = frqDraft.lines[frqLi];
+  const fo = t.closest('[data-facop]'); if (fo) { openFacEd(fo.dataset.facop); return; }
+  const xg = t.closest('[data-xgo]'); if (xg) { const [code, ii] = xg.dataset.xgo.split('|'); if (frqDraft.code === code) { frqLi = +ii; renderLine(); $('lineEd').scrollTop = 0; return; }
+    const go2 = () => { $('overlay8').hidden = true; frqLi = null; frqGo('stmt', code); setTimeout(() => { if (frqDraft && frqDraft.code === code) openLine(+ii); }, 60); };
+    if (frqDirty) askConfirm('فيه تعديلات في المستخلص ده ما اتحفظتش — تروح للمستخلص التاني من غير حفظ؟', 'روح من غير حفظ').then((y) => { if (y) { frqDirty = false; go2(); } }); else go2(); return; }
+  const go = t.closest('[data-le-go]'); if (go && go.dataset.leGo !== 'null') { frqLi = +go.dataset.leGo; renderLine(); $('lineEd').scrollTop = 0; return; }
+  const pp = t.closest('[data-le-p]'); if (pp) { const it = byCode.get(L.c), k = +pp.dataset.leP; L.H = it.p[k]; L.o = it.l[k]; frqDirty = true; renderLine(); return; }
+  const b = t.closest('[data-le]'); if (!b) return; const k = b.dataset.le;
+  if (k === 'close') closeLine();
+  else if (k === 'adoptel') { askConfirm(`اعتماد نسب الملف كمعاملات ثابتة للبند ${L.c}؟ هتتطبق على كل المستخلصات.`, 'اعتماد').then(async (y) => { if (!y) return; const F = JSON.parse(JSON.stringify(frqFac())); F.fx[L.c] = JSON.parse(JSON.stringify(L.el)); F.src[L.c] = 'ok'; if (F.alt) delete F.alt[L.c]; try { await frqSave(F); } catch (e) { toast('تعذر الحفظ — الصلاحية للأدمن بس'); return; } renderLine(); toast('اتعتمدت نسب الملف للبند ✓'); }); }
+  else if (k === 'syncp') { const x = prevCheck(frqDraft).m.get(frqLi); if (x) { L.E = x.eE; L.I = x.eI; frqDirty = true; renderLine(); } }
+  else if (k === 'save') frqSave(frqDraft).then((bb) => { frqDraft = JSON.parse(JSON.stringify(bb)); frqDirty = false; renderLine(); toast('اتحفظ المستخلص ✓'); }).catch(() => toast('تعذر الحفظ — الصلاحية للأدمن بس'));
+  else if (k === 'del') askConfirm('حذف البند ده من المستخلص؟', 'حذف').then((y) => { if (!y) return; frqDraft.lines.splice(frqLi, 1); frqDirty = true; frqOpen.clear(); closeLine(); });
+});
+$('overlay8').addEventListener('click', (ev) => { if (ev.target.id === 'overlay8') closeLine(); });
+
+/* ---------- البند في كل المستخلصات ---------- */
+function itemAcross(c) {
+  const F = frqFac(), dates = frqOrd().dates, out = [];
+  frqStmts().forEach((S0) => { const S = frqDraft && frqDraft.code === S0.code ? frqDraft : S0;
+    S.lines.forEach((L, i) => { if (L.c !== c) return; const r = calcLine(L, S, F, dates), H = +L.H || 0, su = r.rows.reduce((a, x) => a + (x.m == null ? 0 : H * x.p * x.m), 0);
+      out.push({ S, i, L, r, su }); }); });
+  return out;
+}
+function itemAcrossHTML(c, curCode, curI) {
+  const rows = itemAcross(c); if (!rows.length) return '<p class="note">البند مش موجود في أي مستخلص.</p>';
+  let tot = 0; rows.forEach((x) => { tot += x.r.tot; });
+  return `<div class="tbl"><table class="mini hist"><thead><tr><th>المستخلص</th><th>شهر الحساب</th><th>النوع</th><th>الكمية المستحقة</th><th>تغير سعر الوحدة</th><th>فرق السعر</th></tr></thead><tbody>
+    ${rows.map((x) => { const cur = x.S.code === curCode && x.i === curI; return `<tr class="${cur ? 'cur' : 'go'}" ${cur ? '' : `data-xgo="${esc(x.S.code)}|${x.i}"`}><td data-l="" class="hd">جاري ${x.S.no}${cur ? ' <span class="badge ok">المفتوح</span>' : ''}</td><td data-l="شهر الحساب">${ymLabel(x.S.month)}</td><td data-l="النوع">${x.L.w === 's' ? 'تشوينات' : 'أعمال'}</td><td data-l="الكمية المستحقة" class="num">${fmtQ(x.r.N)}</td><td data-l="تغير سعر الوحدة" class="num">${fmtP(x.su)}</td><td data-l="فرق السعر" class="num ${x.r.tot < -0.005 ? 'neg' : ''}"><b>${fmt(x.r.tot)}</b></td></tr>`; }).join('')}
+    <tr class="tot"><td data-l="" class="hd">إجمالي فروق البند في كل المستخلصات</td><td data-l=""></td><td data-l=""></td><td data-l=""></td><td data-l=""></td><td data-l="الإجمالي" class="num"><b>${fmt(tot)}</b></td></tr></tbody></table></div>`;
+}
+function itemAcrossShort(c) {
+  const rows = itemAcross(c); if (!rows.length) return '';
+  const by = {}; rows.forEach((x) => { by[x.S.no] = (by[x.S.no] || 0) + x.r.tot; }); const tot = rows.reduce((a, x) => a + x.r.tot, 0);
+  return `<div class="frqhist"><span class="f">فروق الأسعار:</span> ${Object.keys(by).map((n) => `<span class="el">جاري ${n} <b class="num">${fmt(by[n])}</b></span>`).join('')} <span class="el tot">الإجمالي <b class="num">${fmt(tot)}</b></span></div>`;
+}
+
+/* ---------- أيقونات خطية بدل الإيموجي في شريط التبويبات ---------- */
+(function () {
+  const P = {
+    dash: '<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10"/><path d="M10 20v-5h4v5"/>',
+    cat: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M8.5 10h7M8.5 14h7M8.5 18h4"/>',
+    loc: '<path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
+    items: '<path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/>',
+    inv: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6"/>',
+    frq: '<path d="M3 20h18"/><path d="M5 16l4.5-5 3.5 3 6-7"/><path d="M15 7h4v4"/>',
+    news: '<path d="M4 10v4h3l6 4V6L7 10H4z"/><path d="M16.5 9a4 4 0 0 1 0 6"/>',
+  };
+  document.querySelectorAll('.tabs button[data-nav]').forEach((b) => { const ic = b.querySelector('.ic'); const p = P[b.dataset.nav]; if (ic && p) ic.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`; });
+})();
 
 
 /* ---------- settings + start ---------- */
