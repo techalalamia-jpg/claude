@@ -547,6 +547,27 @@ section > .note, main > .note { line-height: 1.7; }
 .frqline .f { font-weight: 700; color: var(--muted); }
 button.faccell { padding: 3px 9px; font-size: 12px; border-radius: 20px; white-space: nowrap; background: var(--ok-bg); color: var(--ok); border-color: transparent; }
 button.faccell.bad { background: var(--warn-bg); color: var(--warn); }
+.mpick { display: inline-flex; gap: 4px; }
+.mpick select { padding: 6px 8px; }
+.idx-add { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; margin-bottom: 8px; }
+.idx-add .box { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-inline-start: 4px solid var(--gold-fill); border-radius: 10px; padding: 10px 12px; }
+.idx-add .box b { flex: 1 1 100%; font-size: 14px; }
+.idx-add .box input[type=text] { flex: 1 1 180px; width: auto; }
+#tabFrq .idx-tbl td.stick, #tabFrq .idx-tbl tbody tr td.stick { background: var(--surface) !important; z-index: 2; box-shadow: -2px 0 6px rgba(0,0,0,.12); }
+#tabFrq .idx-tbl th.stick { background: var(--navy) !important; z-index: 4; }
+#tabFrq .idx-tbl th { z-index: 3; }
+.idx-tbl th .xm { border: 0; background: transparent; color: inherit; opacity: .6; padding: 0 4px; font-size: 11px; }
+.idx-tbl th.hl, .idx-tbl td.hl, .idx-tbl tr.hl td { background: var(--gold-bg) !important; }
+.idx-tbl tr.hl td.stick { background: var(--gold-bg) !important; }
+.mu-ver { padding: 10px 16px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); direction: rtl; }
+@media (max-width: 760px) {
+  #tabFrq .idx-tbl .stick { min-width: 130px; max-width: 150px; font-size: 12px; }
+  .idx-tbl input.ix { width: 70px !important; }
+  .idx-add { grid-template-columns: 1fr; }
+}
+.mpick select { width: auto !important; min-width: 0; flex: 0 0 auto; }
+.ord label, .frq-meta label { flex-wrap: wrap; }
+.ord, .ord-list, .frq-head > div { min-width: 0; max-width: 100%; }
 </style>
 
 <header class="top">
@@ -1623,7 +1644,7 @@ function buildMenu() {
     + (isAdmin ? it('dev', '🛠', 'خيارات المطور') : '')
     + it('theme', '🌙', 'المظهر: ' + (({ auto: 'تلقائي', dark: 'أسود', light: 'فاتح' })[lsGet('hasr-theme', 'auto')] || 'تلقائي'))
     + (supaSess ? it('logout', '🚪', 'تسجيل الخروج') : '')
-    + (window.Android ? it('exit', '⏻', 'إغلاق التطبيق') : '') + '</div>';
+    + (window.Android ? it('exit', '⏻', 'إغلاق التطبيق') : '') + '</div>' + '<div class="mu-ver">' + esc(appVer()) + '</div>';
 }
 $('menuBtn').addEventListener('click', (ev) => { ev.stopPropagation(); buildMenu(); $('menu').hidden = !$('menu').hidden; });
 document.addEventListener('click', (ev) => { if (!$('menu').hidden && !ev.target.closest('#menu')) $('menu').hidden = true; });
@@ -2587,6 +2608,12 @@ function parseArMonth(s) {
   const x = parseFloat(s); if (!isNaN(x) && x > 20000 && x < 80000) { const d = new Date(Math.round((x - 25569) * 864e5)); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0'); }
   return null;
 }
+/* اختيار شهر بقايمتين (شهر + سنة) — بيشتغل على أي موبايل */
+function monthPick(key, val, dis) {
+  const [y, m] = String(val || '').split('-'), Y = new Date().getFullYear(), ys = []; for (let x = 2020; x <= Y + 3; x++) ys.push(x);
+  return `<span class="mpick" data-mp="${esc(key)}"><select data-mpm ${dis ? 'disabled' : ''}><option value="">الشهر</option>${AR_MONTHS.map((n, i) => `<option value="${String(i + 1).padStart(2, '0')}" ${+m === i + 1 ? 'selected' : ''}>${n}</option>`).join('')}</select><select data-mpy ${dis ? 'disabled' : ''}><option value="">السنة</option>${ys.map((x) => `<option ${+y === x ? 'selected' : ''}>${x}</option>`).join('')}</select></span>`;
+}
+const mpVal = (sp) => { const m = sp.querySelector('[data-mpm]').value, y = sp.querySelector('[data-mpy]').value; return m && y ? y + '-' + m : ''; };
 const pctTxt = (v, d = 2) => (v == null || isNaN(v) ? '—' : (Math.round(v * 100 * 10 ** d) / 10 ** d).toLocaleString('en-US', { maximumFractionDigits: d }) + '%');
 const frqPid = () => curPid;
 const FRQ_SRC = { pdf: 'من الكراسة (PDF)', stmt: 'من المستخلصات المراجعة', manual: 'مُدخل يدوي', ok: 'مؤكد من المهندس', file: 'من ملف مستخلص', review: 'محتاج مراجعة' };
@@ -2829,7 +2856,7 @@ function stmtHTML() {
   const seq = `<div class="frq-seq"><button type="button" class="ghost small" data-fv="stmts">☰ كل المستخلصات</button>${pc.P ? `<button type="button" class="small" data-open="${esc(pc.P.code)}">→ جاري ${pc.P.no}</button>` : ''}<b>جاري ${S.no || '—'}</b>${NX ? `<button type="button" class="small" data-open="${esc(NX.code)}">جاري ${NX.no} ←</button>` : ''}</div>`;
   const prevBox = pc.P ? `<div class="frq-prev ${nPrev || pc.missing.length ? 'bad' : 'ok'}"><span>الكمية السابقة ونسبة الصرف السابقة متاخدة من إجماليات <b>جاري ${pc.P.no}</b> (${ymLabel(pc.P.month)}).</span> ${nPrev || pc.missing.length ? `<b>${nPrev} بند السابقة فيهم غير مطابقة${pc.missing.length ? ` و${pc.missing.length} بند ناقص` : ''}</b> — متعلّمين بالأحمر.${frqCanEdit() && nPrev ? ' <button type="button" class="small" data-act="syncPrev">مطابقة السابقة بجاري ' + pc.P.no + '</button>' : ''}` : '<b>كل السابقة مطابقة ✓</b>'}</div>` : '<div class="frq-prev ok"><span>ده أول مستخلص — مفيش سابقة.</span></div>';
   return seq + `<div class="frq-head"><div><h2>مستخلص فروق أسعار — جاري <input class="q inl" data-h="no" value="${S.no || ''}" ${ro} style="width:64px"></h2>
-      <div class="frq-meta"><label>شهر الحساب <input type="month" data-h="month" value="${S.month || ''}" ${ro ? 'disabled' : ''}></label>${used.map((o) => `<span class="chip ${dates[o] ? '' : 'bad'}">${esc(o)}: أساس ${ymLabel(dates[o])}</span>`).join('')}</div></div>
+      <div class="frq-meta"><label>شهر الحساب ${monthPick('stmt', S.month, !!ro)}</label>${used.map((o) => `<span class="chip ${dates[o] ? '' : 'bad'}">${esc(o)}: أساس ${ymLabel(dates[o])}</span>`).join('')}</div></div>
     <div class="acts">${frqCanEdit() ? `<button type="button" class="primary" data-act="saveStmt" ${frqDirty || S.seed ? '' : 'disabled'}>${frqDirty ? 'حفظ التعديلات' : S.seed ? 'حفظ في السحابة' : 'محفوظ ✓'}</button>` : ''}<button type="button" data-act="exportStmt">⬇ تصدير إكسيل</button>${frqCanEdit() ? '<button type="button" data-act="impInto">⬆ استيراد من إكسيل</button><button type="button" class="ghost danger small" data-act="delStmt">حذف</button>' : ''}</div></div>
     <div class="frq-kpis"><div><span>فروق الأعمال</span><b class="num">${fmt(C.w)}</b></div><div><span>فروق التشوينات</span><b class="num ${C.s < 0 ? 'neg' : ''}">${fmt(C.s)}</b></div><div class="tot"><span>إجمالي فروق الأسعار</span><b class="num">${fmt(C.tot)}</b></div>
       <button type="button" class="kiss ${nErr ? 'err' : nW ? 'warn' : 'ok'}" data-act="togIss"><span>المراجعة</span><b>${nErr ? nErr + ' خطأ' : 'مفيش أخطاء'}${nW ? ' · ' + nW + ' تنبيه' : ''}</b></button></div>
@@ -2949,12 +2976,13 @@ function closeFacEd() { $('overlay7').hidden = true; facEd = null; document.body
 function idxHTML() {
   if (!idxDraft) { const I = frqIdx(); idxDraft = { els: JSON.parse(JSON.stringify(I.els)), v: JSON.parse(JSON.stringify(I.v)), extra: [], dirty: false, seed: !!I.seed }; }
   const D = idxDraft, ro = !frqCanEdit();
-  const months = [...new Set([...Object.values(D.v).flatMap((r) => Object.keys(r)), ...D.extra])].sort();
-  return `<div class="frq-head"><div><h2>الأرقام القياسية</h2><p class="note">جدول واحد مشترك لكل المشاريع: قيمة كل عنصر في كل شهر. ${D.seed ? 'البيانات الحالية متجهزة من شيت «الأرقام القياسية» في جاري 3 — دوس «حفظ» عشان تتثبت.' : ''}</p></div>
+  const months = [...new Set([...Object.values(D.v).flatMap((r) => Object.keys(r)), ...D.extra])].sort().reverse();
+  return `<div class="frq-head"><div><h2>الأرقام القياسية</h2><p class="note">جدول واحد مشترك لكل المشاريع: قيمة كل عنصر في كل شهر. ${D.seed ? 'البيانات الحالية متجهزة من شيتات «الأرقام القياسية» في جاري 1 لـ 4 — دوس «حفظ الجدول» عشان تتثبت.' : ''}</p></div>
     <div class="acts">${ro ? '' : `<button type="button" class="primary" data-act="saveIdx" ${D.dirty || D.seed ? '' : 'disabled'}>${D.dirty || D.seed ? 'حفظ الجدول' : 'محفوظ ✓'}</button><button type="button" data-act="impIdx">⬆ استيراد من إكسيل</button>`}</div></div>
-    ${ro ? '' : `<div class="frq-flt"><label class="sm">إضافة شهر <input type="month" id="idxNewM"></label><button type="button" class="small" data-act="addMonth">＋ شهر</button><span class="sp"></span><input type="text" id="idxNewE" placeholder="اسم عنصر جديد" style="max-width:280px"><button type="button" class="small" data-act="addEl">＋ عنصر</button></div>`}
-    <div class="tbl idx-tbl"><table><thead><tr><th class="stick">بنود التغير</th>${months.map((m) => `<th class="num">${ymLabel(m)}</th>`).join('')}</tr></thead><tbody>
-    ${D.els.map(([n], r) => `<tr><td class="stick">${esc(n)}</td>${months.map((m) => { const v = (D.v[n] || {})[m]; return `<td><input class="q ix" data-ix="${r}|${m}" value="${v == null ? '' : v}" ${ro} inputmode="decimal"></td>`; }).join('')}</tr>`).join('')}
+    ${ro ? '' : `<div class="idx-add"><div class="box"><b>إضافة شهر جديد</b>${monthPick('idxnew', '')}<button type="button" class="primary small" data-act="addMonth">＋ إضافة الشهر</button></div><div class="box"><b>إضافة عنصر (بند تغير) جديد</b><input type="text" id="idxNewE" placeholder="مثال: الألومنيوم ومنتجاته"><input type="text" id="idxNewP" class="q" inputmode="numeric" placeholder="رقم الصفحة" style="max-width:110px"><button type="button" class="primary small" data-act="addEl">＋ إضافة العنصر</button></div></div>
+    <p class="note">أحدث شهر بيظهر الأول جنب أسماء العناصر. اكتب القيم في الخانات ودوس «حفظ الجدول».</p>`}
+    <div class="tbl idx-tbl"><table><thead><tr><th class="stick">بنود التغير</th>${months.map((m) => `<th class="num ${idxDraft.hl === m ? 'hl' : ''}">${ymLabel(m)}${ro ? '' : ` <button type="button" class="xm" data-delm="${m}" aria-label="حذف الشهر">✕</button>`}</th>`).join('')}</tr></thead><tbody>
+    ${D.els.map(([n, pg], r) => `<tr class="${idxDraft.hle === n ? 'hl' : ''}"><td class="stick">${esc(n)}${pg ? ` <span class="sm">ص${esc(pg)}</span>` : ''}</td>${months.map((m) => { const v = (D.v[n] || {})[m]; return `<td class="${idxDraft.hl === m ? 'hl' : ''}"><input class="q ix" data-ix="${r}|${m}" value="${v == null ? '' : v}" ${ro} inputmode="decimal"></td>`; }).join('')}</tr>`).join('')}
     </tbody></table></div>`;
 }
 
@@ -2964,7 +2992,7 @@ function ordHTML() {
   const ro = !frqCanEdit(), cnt = {}; DB.forEach((it) => new Set(it.l.filter((o, k) => it.q[k] > 0 || it.p[k] > 0)).forEach((o) => { cnt[o] = (cnt[o] || 0) + 1; }));
   return `<div class="frq-head"><div><h2>تواريخ أوامر الإسناد</h2><p class="note">تاريخ أمر الإسناد = <b>شهر الأساس</b> لكل البنود اللي تبعه. أوامر الإسناد نفسها جاية من برنامج الحصر (المقايسات).</p></div>
     <div class="acts">${ro ? '' : `<button type="button" class="primary" data-act="saveOrd" ${ordDraft.dirty ? '' : 'disabled'}>${ordDraft.dirty ? 'حفظ التواريخ' : 'محفوظ ✓'}</button>`}</div></div>
-    <div class="ord-list">${ORDERS.map((o) => `<div class="ord"><div><b>${esc(o)}</b><span class="sm">${cnt[o] || 0} بند</span></div><label class="sm">شهر الأساس <input type="month" data-od="${esc(o)}" value="${ordDraft.dates[o] || ''}" ${ro ? 'disabled' : ''}></label><span class="chip ${ordDraft.dates[o] ? '' : 'bad'}">${ordDraft.dates[o] ? ymLabel(ordDraft.dates[o]) : 'من غير تاريخ'}</span></div>`).join('')}</div>`;
+    <div class="ord-list">${ORDERS.map((o) => `<div class="ord"><div><b>${esc(o)}</b><span class="sm">${cnt[o] || 0} بند</span></div><label class="sm">شهر الأساس ${monthPick('ord|' + o, ordDraft.dates[o], ro)}</label><span class="chip ${ordDraft.dates[o] ? '' : 'bad'}">${ordDraft.dates[o] ? ymLabel(ordDraft.dates[o]) : 'من غير تاريخ'}</span></div>`).join('')}</div>`;
 }
 
 /* ---------- الأحداث ---------- */
@@ -3023,6 +3051,7 @@ function frqClick(ev) {
   const lap = t.closest('[data-lap]'); if (lap) { const L = frqDraft.lines[+lap.dataset.lap]; L.el = JSON.parse(JSON.stringify(frqFac().fx[L.c])); frqDirty = true; renderFrq(); return; }
   const lsp = t.closest('[data-lsp]'); if (lsp) { const i = +lsp.dataset.lsp, x = prevCheck(frqDraft).m.get(i); if (x) { frqDraft.lines[i].E = x.eE; frqDraft.lines[i].I = x.eI; frqDirty = true; renderFrq(); } return; }
   const okl = t.closest('[data-okl]'); if (okl) { delete frqDraft.lines[+okl.dataset.okl].lm; frqDirty = true; renderFrq(); return; }
+  const dm = t.closest('[data-delm]'); if (dm) { const m = dm.dataset.delm; askConfirm(`حذف عمود ${ymLabel(m)} بكل قيمه من الجدول؟`, 'حذف').then((y) => { if (!y) return; Object.values(idxDraft.v).forEach((r) => { delete r[m]; }); idxDraft.extra = idxDraft.extra.filter((x) => x !== m); idxDraft.dirty = true; renderFrq(); }); return; }
   const rm = t.closest('[data-rm]'); if (rm) { const i = +rm.dataset.rm; askConfirm('حذف البند ده من المستخلص؟', 'حذف').then((y) => { if (!y) return; frqDraft.lines.splice(i, 1); frqOpen.clear(); frqDirty = true; renderFrq(); }); return; }
   const a = t.closest('[data-act]'); if (!a) return;
   const act = a.dataset.act;
@@ -3037,8 +3066,8 @@ function frqClick(ev) {
   else if (act === 'saveFacSeed') frqSave(frqFac()).then(() => { toast('اتحفظت معاملات المشروع ✓'); renderFrq(); }).catch(() => toast('تعذر الحفظ'));
   else if (act === 'saveIdx') { const D = idxDraft; const doc = { code: 'FRQ-IDX', frq: 'idx', els: D.els, v: D.v }; frqSave(doc).then(() => { idxDraft = null; renderFrq(); toast('اتحفظ جدول الأرقام القياسية ✓'); }).catch(() => toast('تعذر الحفظ — الصلاحية للأدمن بس')); }
   else if (act === 'impIdx') importIdxFile();
-  else if (act === 'addMonth') { const m = $('idxNewM').value; if (!m) { toast('اختار الشهر'); return; } if (!idxDraft.extra.includes(m)) idxDraft.extra.push(m); idxDraft.dirty = true; renderFrq(); }
-  else if (act === 'addEl') { const n = $('idxNewE').value.trim(); if (!n) return; if (idxDraft.els.some((e) => e[0] === n)) { toast('العنصر موجود'); return; } idxDraft.els.push([n, null]); idxDraft.dirty = true; renderFrq(); }
+  else if (act === 'addMonth') { const m = mpVal($('tabFrq').querySelector('[data-mp=idxnew]')); if (!m) { toast('اختار الشهر والسنة'); return; } const has = Object.values(idxDraft.v).some((r) => r[m] != null) || idxDraft.extra.includes(m); if (!has) idxDraft.extra.push(m); idxDraft.hl = m; idxDraft.dirty = true; renderFrq(); toast(has ? ymLabel(m) + ' موجود بالفعل' : 'اتضاف ' + ymLabel(m) + ' — اكتب القيم ودوس حفظ'); const c = $('tabFrq').querySelector('.idx-tbl th.hl'); if (c) c.scrollIntoView({ block: 'nearest', inline: 'center' }); }
+  else if (act === 'addEl') { const n = $('idxNewE').value.trim(); if (!n) { toast('اكتب اسم العنصر'); return; } if (idxDraft.els.some((e) => e[0] === n)) { toast('العنصر موجود'); return; } idxDraft.els.push([n, pn($('idxNewP').value)]); idxDraft.hle = n; idxDraft.dirty = true; renderFrq(); toast('اتضاف «' + n + '» آخر الجدول — اكتب قيمه ودوس حفظ'); const r = $('tabFrq').querySelector('.idx-tbl tr.hl'); if (r) r.scrollIntoView({ block: 'center' }); }
   else if (act === 'saveOrd') { const doc = Object.assign({}, frqOrd(), { dates: ordDraft.dates }); frqSave(doc).then(() => { ordDraft = null; renderFrq(); toast('اتحفظت التواريخ ✓'); }).catch(() => toast('تعذر الحفظ — الصلاحية للأدمن بس')); }
 }
 function frqInput(ev) {
@@ -3051,6 +3080,11 @@ function frqInput(ev) {
 }
 function frqChange(ev) {
   const t = ev.target;
+  const sp = t.closest('[data-mp]');
+  if (sp) { const k = sp.dataset.mp, v = mpVal(sp);
+    if (k === 'stmt' && frqDraft) { if (v || (!sp.querySelector('[data-mpm]').value && !sp.querySelector('[data-mpy]').value)) { frqDraft.month = v; frqDirty = true; renderFrq(); } }
+    else if (k.startsWith('ord|') && ordDraft) { const o = k.slice(4); if (v) ordDraft.dates[o] = v; else delete ordDraft.dates[o]; ordDraft.dirty = true; if (v || (!sp.querySelector('[data-mpm]').value && !sp.querySelector('[data-mpy]').value)) renderFrq(); else { const b = $('tabFrq').querySelector('[data-act=saveOrd]'); if (b) { b.disabled = false; b.textContent = 'حفظ التواريخ'; } } }
+    return; }
   if (t.dataset.h === 'month' && frqDraft) { frqDraft.month = t.value; frqDirty = true; renderFrq(); }
   else if (t.dataset.ff === 'sec') { frqF.sec = t.value; renderFrq(); }
   else if (t.dataset.ff === 'iss') { frqF.iss = t.checked; renderFrq(); }
@@ -3186,6 +3220,10 @@ function frqFacCell(code) {
   return `<button type="button" class="faccell ${!e.length || s > FRQ_MAX + 1e-9 ? 'bad' : ''}" data-facq="${esc(code)}" title="${esc(e.map((x) => x[0] + ' ' + pctTxt(x[1])).join('\n') || 'مفيش معاملات')}">${e.length ? `${e.length} عنصر · ${pctTxt(s)}` : '＋ معاملات'}</button>`;
 }
 ['catList', 'sheet'].forEach((id) => $(id).addEventListener('click', (ev) => { const b = ev.target.closest('[data-facq]'); if (!b) return; ev.stopPropagation(); ev.preventDefault(); openFacEd(b.dataset.facq); }, true));
+
+/* ---------- رقم النسخة ---------- */
+const HASR_WEB_VER = '2026.11.17-0825';
+function appVer() { return window.HASR_APK_VER ? `نسخة التطبيق: أندرويد ${window.HASR_APK_VER} · البرنامج ${HASR_WEB_VER}` : `نسخة البرنامج: ${HASR_WEB_VER}`; }
 
 
 /* ---------- settings + start ---------- */
