@@ -1,6 +1,6 @@
 {
   "appId": "com.alalamia.hasrmostakhlasat",
-  "appName": "حصر المستخلصات",
+  "appName": "المكتب الفني",
   "webDir": "www",
   "server": { "androidScheme": "https" },
   "plugins": { "CapacitorHttp": { "enabled": false } }
