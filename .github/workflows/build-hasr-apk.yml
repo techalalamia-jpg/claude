@@ -1,0 +1,56 @@
+name: Build Hasr APK
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "hasr-app/**"
+      - ".github/workflows/build-hasr-apk.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-hasr-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: hasr-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        run: npm install
+      - name: Add Android platform
+        run: npx cap add android
+      - name: Sync web assets
+        run: npx cap sync android
+      - name: Build debug APK
+        working-directory: hasr-app/android
+        run: ./gradlew assembleDebug --no-daemon
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hasr-apk
+          path: hasr-app/android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Publish APK to a release (direct download link)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        working-directory: ${{ github.workspace }}
+        run: |
+          cp hasr-app/android/app/build/outputs/apk/debug/app-debug.apk hasr.apk
+          gh release delete hasr-apk-latest --yes --cleanup-tag || true
+          gh release create hasr-apk-latest hasr.apk \
+            --title "حصر المستخلصات - APK" \
+            --notes "نزّل hasr.apk وثبّته على الأندرويد (فعّل التثبيت من مصادر غير معروفة). نفس بيانات البرنامج على السحابة — سجّل دخولك بنفس الإيميل."
