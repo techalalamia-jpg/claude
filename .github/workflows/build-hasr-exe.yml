@@ -1,0 +1,48 @@
+name: Build Hasr EXE
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "hasr-desktop/**"
+      - "hasr-app/www/index.html"
+      - ".github/workflows/build-hasr-exe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-hasr-exe
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Copy latest web app
+        shell: bash
+        run: cp hasr-app/www/index.html hasr-desktop/app/index.html
+      - name: Install
+        working-directory: hasr-desktop
+        run: npm install
+      - name: Build exe
+        working-directory: hasr-desktop
+        run: npx electron-builder --win portable --x64
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - name: Publish exe + web copy (for auto-update)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp hasr-desktop/dist/Maktab-Fanni.exe Maktab-Fanni.exe
+          cp hasr-app/www/index.html index.html
+          gh release delete hasr-exe-latest --yes --cleanup-tag || true
+          gh release create hasr-exe-latest Maktab-Fanni.exe --title "المكتب الفني - برنامج ويندوز" --notes "شغّل Maktab-Fanni.exe مباشرة (بدون تثبيت). البرنامج يتصل بالسحابة والحفظ أونلاين، ويحدّث نفسه عند فتحه."
+          gh release delete hasr-web-latest --yes --cleanup-tag || true
+          gh release create hasr-web-latest index.html --title "web copy" --notes "نسخة الواجهة التي يحمّلها البرنامج تلقائياً."
