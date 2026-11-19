@@ -924,7 +924,7 @@ table.mini.hist tr.cur td { background: var(--brass-soft) !important; }
     <section id="tabCat" hidden>
       <div class="fltrow">
         <div class="grow combo"><label class="f" for="catQ">بحث في المقايسة (كود / رقم بند / جزء من البيان)</label><input type="text" id="catQ" autocomplete="off" placeholder="مثال: بياض، مروحة، A-019" role="combobox" aria-expanded="false"><ul class="pop" id="catQPop" role="listbox" hidden></ul></div>
-        <div><label class="f" for="catOrder">أمر الإسناد</label><select id="catOrder"></select></div>
+        <div><label class="f" for="catOrder">أمر الإسناد</label><select id="catOrder"></select></div><div><label class="f" for="catOver">الحصر الفعلي</label><select id="catOver"><option value="">الكل</option><option value="over">أكبر من كمية المقايسة</option></select></div>
         <div><button type="button" class="primary" id="newItemBtn" hidden>＋ بند جديد</button></div>
         <div hidden><label class="f" for="catState">الحالة</label><select id="catState"><option value="">الكل</option><option value="saved">اللي عليها حصر محفوظ</option><option value="none">اللي لسه ما اتحصرتش</option><option value="diff">فيها فرق</option></select></div>
       </div>
@@ -1361,6 +1361,7 @@ function renderCat() {
     if (toks.length && !toks.every((x) => i.key.includes(x))) return false;
     const S = items.get(i.c);
     if (st === 'saved' && !S) return false; if (st === 'none' && S) return false; if (st === 'diff' && !(S && S.c.hasDiff)) return false;
+    if ($('catOver').value === 'over' && !boqOver(i)) return false;
     return true;
   });
   $('catInfo').textContent = `${list.length} بند${catType ? ' — ' + catType : ''}${oi !== '' ? ' — ' + ORDERS[+oi] : ''} — القيمة التعاقدية ${fmtM(list.reduce((a, i) => a + catVal(i, oi), 0))}`;
@@ -1370,7 +1371,7 @@ function renderCat() {
   $('catList').innerHTML = catTableHTML(shown, oi);
 }
 $('typeCards').addEventListener('click', (ev) => { const b = ev.target.closest('[data-type]'); if (!b) return; catType = b.dataset.type; catLimit = 120; renderCat(); });
-['catQ', 'catOrder', 'catState'].forEach((id) => $(id).addEventListener(id === 'catQ' ? 'input' : 'change', () => { catLimit = 120; renderCat(); }));
+['catQ', 'catOrder', 'catState', 'catOver'].forEach((id) => $(id).addEventListener(id === 'catQ' ? 'input' : 'change', () => { catLimit = 120; renderCat(); }));
 $('catMore').addEventListener('click', () => { catLimit += 200; renderCat(); });
 $('catList').addEventListener('click', (ev) => { const tr = ev.target.closest('tr[data-code]'); if (tr) openBoq(tr.dataset.code); });
 $('catList').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { const tr = ev.target.closest('tr[data-code]'); if (tr) openBoq(tr.dataset.code); } });
@@ -3019,10 +3020,17 @@ function boqPriceChips(it) {
   for (let k = 0; k < 7; k++) { const p = (it.p[k] || 0) * (it.f[k] || 1); if (!p || !(it.q[k] || 0)) continue; const key = Math.round(p * 1e4); if (!m.has(key)) m.set(key, { p, os: new Set() }); m.get(key).os.add(boqOrdShort(it.l[k])); }
   return [...m.values()].map((x) => `<span class="el" title="${esc([...x.os].join('، '))}">${fmtP(x.p)}</span>`).join('') || '—';
 }
+/* الحصر الفعلي (المحفوظ فقط) أكبر من الكمية التعاقدية للبند (الشريحة الأولى) */
+function boqOver(it) {
+  const S = items.get(it.c); if (!S) return null;
+  const h = effHasr(S), c = it.q[0] || 0; if (h == null || c <= 0 || h <= c + 1e-9) return null;
+  return { h, c, ex: h - c, pct: (h - c) / c };
+}
 function catTableHTML(shown, oi) {
-  return `<table><thead><tr><th>الكود</th><th>رقم البند</th><th>النوع</th><th>البيان</th><th>الوحدة</th><th>الكمية التعاقدية${oi !== '' ? ' (للأمر)' : ''}</th><th>سعر الوحدة</th><th class="mny">القيمة التعاقدية</th></tr></thead><tbody>${shown.map((i) => {
+  const ov = $('catOver') && $('catOver').value === 'over';
+  return `<table><thead><tr><th>الكود</th><th>رقم البند</th><th>النوع</th><th>البيان</th><th>الوحدة</th><th>الكمية التعاقدية${oi !== '' ? ' (للأمر)' : ''}</th>${ov ? '<th>الحصر الفعلي</th><th>التجاوز</th><th>نسبة التجاوز</th>' : ''}<th>سعر الوحدة</th><th class="mny">القيمة التعاقدية</th></tr></thead><tbody>${shown.map((i) => {
     const b = boqPrice(i, oi);
-    return `<tr class="row" tabindex="0" data-code="${esc(i.c)}"><td class="cd">${esc(i.c)}</td><td class="num">${esc(i.n)}</td><td><span class="tag">${esc(i.t)}</span></td><td class="dsc"><div>${esc(i.d)}</div></td><td>${esc(i.u)}</td><td class="num">${fmtQ(b.q)}</td><td class="num">${b.multi ? `<span title="أكثر من سعر للبند — متوسط مرجح">≈ ${fmt(b.avg)}</span> <span class="badge n">${'أسعار متعددة'}</span>` : fmt(b.avg)}</td><td class="num mny"><b>${fmt(b.v)}</b></td></tr>`;
+    return `<tr class="row" tabindex="0" data-code="${esc(i.c)}"><td class="cd">${esc(i.c)}</td><td class="num">${esc(i.n)}</td><td><span class="tag">${esc(i.t)}</span></td><td class="dsc"><div>${esc(i.d)}</div></td><td>${esc(i.u)}</td><td class="num">${fmtQ(b.q)}</td>${ov ? (() => { const x = boqOver(i); return x ? `<td class="num">${fmtQ(x.h)}</td><td class="num"><b>${fmtQ(x.ex)}</b></td><td class="num">${(x.pct * 100).toFixed(1)}%</td>` : '<td></td><td></td><td></td>'; })() : ''}<td class="num">${b.multi ? `<span title="أكثر من سعر للبند — متوسط مرجح">≈ ${fmt(b.avg)}</span> <span class="badge n">${'أسعار متعددة'}</span>` : fmt(b.avg)}</td><td class="num mny"><b>${fmt(b.v)}</b></td></tr>`;
   }).join('')}</tbody></table>`;
 }
 function openBoq(code) {
@@ -3979,7 +3987,7 @@ function frqFacCell(code) {
 ['catList', 'sheet', 'boqEd'].forEach((id) => $(id).addEventListener('click', (ev) => { const b = ev.target.closest('[data-facq]'); if (!b) return; ev.stopPropagation(); ev.preventDefault(); openFacEd(b.dataset.facq); }, true));
 
 /* ---------- رقم النسخة ---------- */
-const HASR_WEB_VER = '2026.11.18-1634';
+const HASR_WEB_VER = '2026.11.19-0907';
 function appVer() { return window.HASR_APK_VER ? `نسخة التطبيق: أندرويد ${window.HASR_APK_VER} · البرنامج ${HASR_WEB_VER}` : `نسخة البرنامج: ${HASR_WEB_VER}`; }
 
 /* ---------- شاشة البند بكل تفاصيله (بتفتح لما تدوس على البند) ---------- */
