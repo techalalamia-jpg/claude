@@ -1281,8 +1281,8 @@ function renderItems() {
   if (!items.size) { $('itemsList').innerHTML = '<div class="empty-state"><b>لسه مفيش بنود محفوظة</b>اكتب كود البند أو جزء من البيان في خانة البحث فوق، واختاره، واكتب الحصر ومستخلص الأعمال، وبعدين دوس «حفظ».</div>'; return; }
   if (!list.length) { $('itemsList').innerHTML = '<div class="empty-state"><b>مفيش بنود مطابقة</b>غيّر البحث أو شيل فلتر «فيه فرق».</div>'; return; }
   const dtd = (c) => (c.diff == null ? '<td>—</td>' : c.hasDiff ? `<td class="num ${c.diff > 0 ? 'dpos' : 'dneg'}">${sgn(c.diff)}</td>` : '<td class="num deq">مطابق</td>');
-  $('itemsList').innerHTML = `<table><thead><tr><th>الكود</th><th>البيان</th><th>الوحدة</th><th>الحصر</th><th>مستخلص أعمال</th><th>تشوين</th><th>الفرق</th><th class="mny">قيمة الحصر</th><th>آخر تعديل</th></tr></thead><tbody>${list.map((S) => { const c = S.c;
-    return `<tr class="row" tabindex="0" data-code="${esc(S.code)}"><td class="cd">${esc(S.code)}</td><td class="dsc"><div>${esc(S.item.d)}</div></td><td>${esc(S.item.u)}</td><td class="num">${c.hs == null ? '—' : fmtQ(c.hs)}</td><td class="num">${c.ws == null ? '—' : fmtQ(c.ws)}</td><td class="num">${c.st == null ? '—' : fmtQ(c.st)}</td>${dtd(c)}<td class="num mny">${fmt0(c.valH)}</td><td class="num">${fmtD(S.updatedAt)}</td></tr>`; }).join('')}</tbody></table>`;
+  $('itemsList').innerHTML = `<table><thead><tr><th>الكود</th><th>البيان</th><th>الوحدة</th><th>الحصر</th><th>مستخلص أعمال</th><th>تشوين</th><th>الفرق</th><th>مجموع التعاقدي</th><th>الحصر − التعاقدي</th><th class="mny">قيمة الحصر</th><th>آخر تعديل</th></tr></thead><tbody>${list.map((S) => { const c = S.c; const tq = catQty(S.item, ''), dq = c.hs == null ? null : c.hs - tq;
+    return `<tr class="row" tabindex="0" data-code="${esc(S.code)}"><td class="cd">${esc(S.code)}</td><td class="dsc"><div>${esc(S.item.d)}</div></td><td>${esc(S.item.u)}</td><td class="num">${c.hs == null ? '—' : fmtQ(c.hs)}</td><td class="num">${c.ws == null ? '—' : fmtQ(c.ws)}</td><td class="num">${c.st == null ? '—' : fmtQ(c.st)}</td>${dtd(c)}<td class="num">${fmtQ(tq)}</td>${dq == null ? '<td>—</td>' : Math.abs(dq) <= EPS ? '<td class="num deq">مطابق</td>' : `<td class="num ${dq > 0 ? 'dpos' : 'dneg'}">${sgn(dq)}</td>`}<td class="num mny">${fmt0(c.valH)}</td><td class="num">${fmtD(S.updatedAt)}</td></tr>`; }).join('')}</tbody></table>`;
 }
 function renderInv() {
   const list = [...items.values()].filter((S) => S.must != null || S.stock != null || S.astock != null).sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
@@ -3987,7 +3987,7 @@ function frqFacCell(code) {
 ['catList', 'sheet', 'boqEd'].forEach((id) => $(id).addEventListener('click', (ev) => { const b = ev.target.closest('[data-facq]'); if (!b) return; ev.stopPropagation(); ev.preventDefault(); openFacEd(b.dataset.facq); }, true));
 
 /* ---------- رقم النسخة ---------- */
-const HASR_WEB_VER = '2026.11.19-0907';
+const HASR_WEB_VER = '2026.11.19-0914';
 function appVer() { return window.HASR_APK_VER ? `نسخة التطبيق: أندرويد ${window.HASR_APK_VER} · البرنامج ${HASR_WEB_VER}` : `نسخة البرنامج: ${HASR_WEB_VER}`; }
 
 /* ---------- شاشة البند بكل تفاصيله (بتفتح لما تدوس على البند) ---------- */
